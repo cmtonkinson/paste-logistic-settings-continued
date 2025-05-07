@@ -1,0 +1,10 @@
+{
+  "name": "paste-logistic-settings-continued",
+  "version": "0.1.0",
+  "title": "Paste Logistic Settings (Continued)",
+  "author": "Xantiloth",
+  "description": "Copy and paste logistic chest and inserter filters.",
+  "factorio_version": "2.0",
+  "dependencies": ["base >= 2.0"]
+}
+
