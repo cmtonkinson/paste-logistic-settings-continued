@@ -2,7 +2,17 @@
 
 NAME="paste-logistic-settings-continued"
 RELEASE_DIR=$NAME
-RELEASE_FILES=(info.json data.lua control.lua scripts locale thumbnail.png changelog.txt LICENSE.txt)
+RELEASE_FILES=(
+  LICENSE.txt
+  changelog.txt
+  control.lua
+  data.lua
+  info.json
+  locale
+  scripts
+  settings.lue
+  thumbnail.png
+)
 OLD_VERSIONS="old-releases"
 VERSION=$(jq -r '.version' info.json)
 
