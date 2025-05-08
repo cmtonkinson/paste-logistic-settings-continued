@@ -3,7 +3,10 @@
 NAME="paste-logistic-settings-continued"
 RELEASE_DIR=$NAME
 RELEASE_FILES=(info.json data.lua control.lua locale thumbnail.png changelog.txt LICENSE.txt)
+OLD_VERSIONS="old-versions"
 VERSION=$(jq -r '.version' info.json)
+
+mkdir -p $OLD_VERSIONS
 
 # The release script cleans up after itself, so if the release directory exists, something went
 # wrong and we don't want to further muck it up.
@@ -44,6 +47,7 @@ fi
 mkdir "$RELEASE_DIR"
 cp -r $RELEASE_FILES "$RELEASE_DIR/"
 zip -r $NAME-$VERSION.zip $RELEASE_DIR
+mv $NAME-$VERSION.zip $OLD_VERSIONS/
 
 # Tag this in the repo.
 git tag -a v$VERSION -m "Release version $VERSION"
