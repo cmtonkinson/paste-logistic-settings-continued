@@ -24,6 +24,22 @@ if [[ $(git log origin/main..HEAD) ]]; then
   exit 3
 fi
 
+# If we're trying to release a version that already exists, ask for confirmation.
+# If confirmed, then we need to delete the existing tag locally, remove it from the remote,
+# and delete the zip before proceeding.
+if git tag | grep -q "v$VERSION"; then
+  echo "Version $VERSION already exists. Do you want to delete it? (y/n)"
+  read -r confirm
+  if [[ $confirm == "y" ]]; then
+    git tag -d v$VERSION
+    git push origin :refs/tags/v$VERSION
+    rm -f $NAME-$VERSION.zip
+  else
+    echo "Exiting."
+    exit 0
+  fi
+fi
+
 # Create the directory, add the necessary files, and zip it up.
 mkdir "$RELEASE_DIR"
 cp -r $RELEASE_FILES "$RELEASE_DIR/"

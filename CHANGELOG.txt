@@ -1,12 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: 2025.05.07
+  Features:
+    - Add simple settings overrides for ingredient and output stack sizes.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.0.1
-Date: 07.05.2025
-  Fixes:
+Date: 2025.05.07
+  Bugfixes:
     - Pasting didn't work onto requester or buffer chests.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.0
-Date: 07.05.2025
+Date: 2025.05.07
   Features:
     - Initial release of Paste Logistic Settings (Continued) - thank you Ezza!
     - Copy recipe outputs from machines.
