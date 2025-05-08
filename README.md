@@ -1,5 +1,5 @@
 # Mod Portal Description
-Before we get started: all credit to Ezza for the amazing Paste Logistic Settings mod. Unfortunately, it looks like that's not going to be updated for 2.0, so I'm keeping it alive (at least for now).
+A huge thanks to Ezza for the original Paste Logistic Settings mod. This is a spiritual successor to that.
 
 ---
 
