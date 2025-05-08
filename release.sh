@@ -10,7 +10,7 @@ RELEASE_FILES=(
   info.json
   locale
   scripts
-  settings.lue
+  settings.lua
   thumbnail.png
 )
 OLD_VERSIONS="old-releases"
