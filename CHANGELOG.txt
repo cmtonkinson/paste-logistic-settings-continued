@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.2
+Date: 2025.05.08
+  Bugfixes:
+    - Fixed a blocking crash when pasting due to settings file STILL not being uploaded correctly.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.1.1
 Date: 2025.05.08
   Bugfixes:
