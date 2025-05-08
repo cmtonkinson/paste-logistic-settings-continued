@@ -11,3 +11,9 @@ Factorio allows you to "copy" from an assembler (chemical plant, etc. - anything
 3. a requester or buffer chest - creates a new (unnamed) logistic group requesting 1 stack of each of the target items recipe ingredients.
 
 This makes setting up a bot mall very quick and easy so that you don't buffer or overproduce too much by default without a bunch of clicking around.
+
+# Development
+You need Lua and luarocks installed.
+
+Run `luarocks install --only-deps dev-0.0-1.rockspec` to install the dev & test dependencies.
+
