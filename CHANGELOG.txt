@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.1
+Date: 2025.05.08
+  Bugfixes:
+    - Fixed a blocking crash when pasting due to settings file not being uploaded correctly.
+    - Fixed a bug where logistic sections would be duplicated when pasting on requester/buffer chests.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 Date: 2025.05.07
   Features:
