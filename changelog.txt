@@ -1,8 +1,10 @@
 ---------------------------------------------------------------------------------------------------
-Version: 
-Date: 
+Version: 1.1.3
+Date: 2025.05.08
   Translation:
     - Added translation values for control settings.
+  Bugfixes:
+    - Fixed that pasting into requester chests would override named logistics groups.
 
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.2

@@ -1,19 +1,40 @@
-# Mod Portal Description
-A huge thanks to Ezza for the original Paste Logistic Settings mod. This is a spiritual successor to that.
-
----
-
-Factorio allows you to "copy" from an assembler (chemical plant, etc. - anything with a recipe) and then "paste" a requester or buffer chest and it will add the ingredients of the assembler recipe to the logistic requests of the chest. This mod allows you to quickly configure inserters and storage chests as well.
-
-`control + shift + right click` an assembler and then `control + shift + left click`...
-1. an inserter - connects the inserter to the logistic network, and adds an "enable" condition so long as there is less than 1 stack of the target item in the network.
-2. a storage chest - sets the logistic filter of the chest to the target item.
-3. a requester or buffer chest - creates a new (unnamed) logistic group requesting 1 stack of each of the target items recipe ingredients.
-
-This makes setting up a bot mall very quick and easy so that you don't buffer or overproduce too much by default without a bunch of clicking around.
+A lightweight Factorio 2.0 mod to save a few clicks when creating bot-operated crafting machines.
 
 # Development
 You need Lua and luarocks installed.
 
 Run `luarocks install --only-deps dev-0.0-1.rockspec` to install the dev & test dependencies.
+
+# Mod Portal Description
+
+## Credits
+A huge thanks to Ezza for the original Paste Logistic Settings mod. This is a spiritual successor to that excellent utility. 
+
+## Overview
+This mod makes setting up bot malls easier. You can already shift+copy/paste from assemblers to requester chests, but this mod allows you to configure inserters and storage chests as well, saving a ton of time and clicking.
+
+## Features
+Copy a recipe from any crafting machine (assembler, chemical plant, furnace, etc.) with `control + shift + right click`. Then, you can paste using `control + shift + left click` onto:
+
+### Inserters
+Pasting to an inserter will:
+1. Enable the logistics network connection
+2. Set the inserter to "enabled" when the network contains less than one stack of the item
+
+You can override the stack behavior with the "Output limit" mod setting. By default this is set to "0" (which is a special value meaning "one stack") but setting it to any positive integer will cause the inserter limit to be set to that specific value (not stacks). A common use case would be to set this to "1" if you didn't want to be buffering full stacks of things.
+
+### Storage Chests
+Pasting to a storage chest will:
+1. Set the logistics filter of the storage chest to the item being copied
+
+### Requester (and Buffer) Chests
+Pasting to a requester chest will:
+1. Create a new (unnamed) logistic group requesting one stack of each of ingredients for the recipe.
+
+If there is alredy an empty logistic group, it will be used instead of creating a new one. If there is an existing logistic group that contains the same types of ingredients, it will be overridden.
+
+**Note:** In order for the mod to override an existing logistic group:
+1. It must not be named.
+2. It must contain a filter for every ingredient.
+3. It must contain filters ONLY for ingredients of the recipe.
 

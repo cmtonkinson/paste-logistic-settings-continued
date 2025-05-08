@@ -71,9 +71,11 @@ function lib.get_or_create_section(game, entity, data)
 
   -- If there are existing sections...
   if point.sections_count > 0 then
-    -- Is there an empty section? Return that.
+    -- Is there an empty, unnamed section? Return that.
     for i, sec in ipairs(point.sections) do
-      if sec.filters_count == 0 then return sec end
+      if sec.filters_count == 0 and sec.group == "" then
+        return sec
+      end
     end
     -- If none are empty, does one section match exactly the kind of ingredients
     -- we need for this recipe? If so, clear the filters and return it. This is
@@ -81,7 +83,7 @@ function lib.get_or_create_section(game, entity, data)
     -- quantities; it's easier to just nuke the section and let the client code
     -- pave over it.
     for idx, sec in ipairs(point.sections) do
-      if lib.has_same_ingredient_names(game, sec.filters, data.ingredients) then
+      if lib.has_same_ingredient_names(game, sec.filters, data.ingredients) and sec.group == "" then
         point.remove_section(idx)
         break
       end
