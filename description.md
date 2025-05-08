@@ -7,16 +7,18 @@ This mod makes setting up bot malls easier. You can already shift+copy/paste fro
 # Features
 Copy a recipe from any crafting machine (assembler, chemical plant, furnace, etc.) with `control + shift + right click`. Then, you can paste using `control + shift + left click` onto:
 
+![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/assembler.png?ref_type=heads)
+
 #### Inserters
 Pasting to an inserter will:
 1. Enable the logistics network connection
 2. Set the inserter to "enabled" when the network contains less than one stack of the item
 
 Before:  
-![](images/inserter-before.png)
+![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/inserter-before.png?ref_type=heads)
 
 After:  
-![](images/inserter-after.png)
+![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/inserter-after.png?ref_type=heads)
 
 You can override the stack behavior with the "Output limit" mod setting. By default this is set to "0" (which is a special value meaning "one stack") but setting it to any positive integer will cause the inserter limit to be set to that specific value (not stacks). A common use case would be to set this to "1" if you didn't want to be buffering full stacks of things.
 
@@ -25,20 +27,20 @@ Pasting to a storage chest will:
 1. Set the logistics filter of the storage chest to the item being copied
 
 Before:  
-![](images/storage-chest-before.png)
+![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/storage-chest-before.png?ref_type=heads)
 
 After:  
-![](images/storage-chest-after.png)
+![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/storage-chest-after.png?ref_type=heads)
 
 #### Requester (and Buffer) Chests
 Pasting to a requester chest will:
 1. Create a new (unnamed) logistic group requesting one stack of each of ingredients for the recipe.
 
 Before:  
-![](images/requester-chest-before.png)
+![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/requester-chest-before.png?ref_type=heads)
 
 After:  
-![](images/requester-chest-after.png)
+![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/requester-chest-after.png?ref_type=heads)
 
 If there is alredy an empty logistic group, it will be used instead of creating a new one. If there is an existing logistic group that contains the same types of ingredients, it will be overridden.
 
