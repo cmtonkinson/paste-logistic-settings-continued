@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "title": "Paste Logistic Settings (Continued)",
   "author": "Xantiloth",
-  "description": "Copy and paste logistic chest and inserter filters.",
+  "description": "Copy and paste recipes to inserter limits and logistic chests.",
   "factorio_version": "2.0",
   "dependencies": ["base >= 2.0"]
 }

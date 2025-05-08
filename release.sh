@@ -26,7 +26,7 @@ fi
 
 # Create the directory, add the necessary files, and zip it up.
 mkdir "$RELEASE_DIR"
-cp $RELEASE_FILES "$RELEASE_DIR/"
+cp -r $RELEASE_FILES "$RELEASE_DIR/"
 zip -r $NAME-$VERSION.zip $RELEASE_DIR
 
 # Tag this in the repo.
