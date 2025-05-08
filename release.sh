@@ -30,7 +30,7 @@ cp -r $RELEASE_FILES "$RELEASE_DIR/"
 zip -r $NAME-$VERSION.zip $RELEASE_DIR
 
 # Tag this in the repo.
-git tag -a v$VERSION -m "Release version $(<VERSION.txt)"
+git tag -a v$VERSION -m "Release version $VERSION"
 git push origin v$VERSION
 
 # Clean up the release directory.
