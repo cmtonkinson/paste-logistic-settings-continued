@@ -5,7 +5,7 @@ Date: 07.05.2025
     - Pasting didn't work onto requester or buffer chests.
 
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.0
+Version: 0.1.0
 Date: 07.05.2025
   Features:
     - Initial release of Paste Logistic Settings (Continued) - thank you Ezza!
