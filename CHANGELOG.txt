@@ -1,0 +1,14 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+Date: 07.05.2025
+  Fixes:
+    - Pasting didn't work onto requester or buffer chests.
+
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 07.05.2025
+  Features:
+    - Initial release of Paste Logistic Settings (Continued) - thank you Ezza!
+    - Copy recipe outputs from machines.
+    - Paste to inserters with logistic condition.
+    - Paste to storage chests with filter.

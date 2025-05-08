@@ -1,9 +1,24 @@
+-----------------------------------------------------------------------------
+--- What stack size to use by default if we can't get it from the prototype.
+local DEFAULT_STACK = 1
+local EVENT_NAMESPACE = "paste-logistic-settings-continued"
+
+-----------------------------------------------------------------------------
+-- Determines whether the entity is valid for copying FROM.
+-- @param entity LuaEntity: THe entityt to test.
+-- @return boolean: True only if the entity is valid for copying.
+
 local function is_valid_source(entity)
   return entity
     and entity.valid
     and entity.get_recipe
     and entity.get_recipe() ~= nil
 end
+
+-----------------------------------------------------------------------------
+-- Determines whether the entity is valid for copying TO.
+-- @param entity LuaEntity: The entity to test.
+-- @return boolean: True only if the entity is valid for copying.
 
 local function is_valid_target(entity)
   return entity
@@ -14,6 +29,11 @@ local function is_valid_target(entity)
     )
 end
 
+-----------------------------------------------------------------------------
+-- Copies the settings from the source entity.
+-- @param entity LuaEntity: The entity to copy from.
+-- @return table: Information about the recipe being crafted.
+
 local function copy_settings(entity)
   local recipe = entity.get_recipe()
   if not recipe then return nil end
@@ -22,95 +42,94 @@ local function copy_settings(entity)
   if not product or not product.name then return nil end
 
   return {
-    type = "recipe-output",
-    name = product.name
+    name = product.name,
+    ingredients = recipe.ingredients,
   }
 end
 
+-----------------------------------------------------------------------------
+--- Applies the settings to an inserter.
+-- @param entity LuaEntity: The inserter to configure.
+-- @param data table: Information about the recipe being crafted.
+-- @return nil
+local function apply_inserter_settings(inserter, data)
+  local behavior = inserter.get_or_create_control_behavior()
+  if not behavior then return end
+
+  local item_proto = prototypes.item[data.name]
+  local quota = item_proto and item_proto.stack_size or DEFAULT_STACK
+
+  behavior.connect_to_logistic_network = true
+  behavior.logistic_condition = {
+    comparator = "<",
+    first_signal = { type = "item", name = data.name},
+    constant = quota,
+  }
+end
+
+-----------------------------------------------------------------------------
+-- Applies the settings to a chest.
+-- @param entity LuaEntity: The chest to copy to.
+-- @param data table: Information about the recipe being crafted.
+local function apply_chest_settings(chest, data)
+  local mode = chest.prototype.logistic_mode
+
+  if mode == "storage" then
+    chest.storage_filter = prototypes.item[data.name]
+
+  elseif mode == "requester" or mode == "buffer" then
+    local point = chest.get_logistic_point(0)
+    local section = point.add_section()
+    if data.ingredients then
+      for i, ing in ipairs(data.ingredients) do
+        local proto = prototypes.item[ing.name]
+        if proto then
+          section.set_slot(i, {
+            value = ing.name,
+            mode = "at-least",
+            min = proto.stack_size,
+          })
+        end
+      end
+    end
+  end
+end
+
+-----------------------------------------------------------------------------
+-- Applies the settings to the target entity.
+-- @param data table: Information about the recipe being crafted.
+-- @param target LuaEntity: The entity to copy to.
 local function paste_settings(data, target)
-  local product_name = data.name
-  local item_proto = prototypes.item[product_name]
-  local stack_size = item_proto and item_proto.stack_size or 17
-
   if target.type == "logistic-container" then
-		target.storage_filter = prototypes.item[product_name]
-
-  elseif target.type == "inserter" and target.get_or_create_control_behavior then
-    local behavior = target.get_or_create_control_behavior()
-    behavior.connect_to_logistic_network = true
-    behavior.logistic_condition = {
-      comparator = "<",
-      first_signal = { type = "item", name = product_name },
-      constant = stack_size
-    }
+    apply_chest_settings(target, data)
+  elseif target.type == "inserter" then
+    apply_inserter_settings(target, data)
   end
 end
 
-script.on_init(function()
-	if not global then global = {} end
-  global.paste_data = {}
-end)
-
+-----------------------------------------------------------------------------
 -- Copy hotkey
-script.on_event("paste-logistic-settings-continued-copy", function(event)
-  local player = game.get_player(event.player_index)
-  if not player then return end
-
+script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
+  local player = game.players[event.player_index]
   local selected = player.selected
-  if not is_valid_source(selected) then
-    player.create_local_flying_text{
-      text = "Not a valid recipe source",
-      position = player.position,
-      color = { r = 1, g = 0.5, b = 0.5 }
-    }
-    return
-  end
+  if not is_valid_source(selected) then return end
 
-  if not global then global = {} end
+  global = global or {}
   global.paste_data = global.paste_data or {}
-  global.paste_data[event.player_index] = copy_settings(selected)
 
-  player.create_local_flying_text{
-    text = "Copied recipe output",
-    position = selected.position,
-    color = { r = 1, g = 1, b = 0.2 }
-  }
+  global.paste_data[event.player_index] = copy_settings(selected)
 end)
 
+-----------------------------------------------------------------------------
 -- Paste hotkey
-script.on_event("paste-logistic-settings-continued-paste", function(event)
-  local player = game.get_player(event.player_index)
-  if not player then return end
-
+script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
+  local player = game.players[event.player_index]
   local selected = player.selected
-  if not is_valid_target(selected) then
-    player.create_local_flying_text{
-      text = "Not a valid target",
-      position = player.position,
-      color = { r = 1, g = 0.4, b = 0.4 }
-    }
-    return
-  end
+  if not is_valid_target(selected) then return end
 
-  if not global then global = {} end
+  global = global or {}
   global.paste_data = global.paste_data or {}
   local data = global.paste_data[event.player_index]
 
-  if not data then
-    player.create_local_flying_text{
-      text = "Nothing copied yet",
-      position = selected.position,
-      color = { r = 1, g = 0.5, b = 0.2 }
-    }
-    return
-  end
-
   paste_settings(data, selected)
-
-  player.create_local_flying_text{
-    text = "Pasted recipe output",
-    position = selected.position,
-    color = { r = 0.5, g = 1, b = 0.5 }
-  }
 end)
-
