@@ -2,7 +2,7 @@
 
 NAME="paste-logistic-settings-continued"
 RELEASE_DIR=$NAME
-RELEASE_FILES=(info.json data.lua control.lua locale thumbnail.png)
+RELEASE_FILES=(info.json data.lua control.lua locale thumbnail.png VERSION.txt CHANGELOG.txt LICENSE.txt)
 
 # The release script cleans up after itself, so if the release directory exists, something went
 # wrong and we don't want to further muck it up.
