@@ -37,6 +37,12 @@ if [[ $(git log origin/main..HEAD) ]]; then
   exit 3
 fi
 
+# If there isn't an entry in changelog.txt for this version, we don't want to release.
+if ! grep -q "Version: $VERSION" changelog.txt; then
+  echo "There is no entry in changelog.txt for this version. Exiting."
+  exit 4
+fi
+
 # If we're trying to release a version that already exists, ask for confirmation.
 # If confirmed, then we need to delete the existing tag locally, remove it from the remote,
 # and delete the zip before proceeding.
