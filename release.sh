@@ -8,6 +8,7 @@ RELEASE_FILES=(
   control.lua
   data.lua
   info.json
+  images
   locale
   scripts
   settings.lua
