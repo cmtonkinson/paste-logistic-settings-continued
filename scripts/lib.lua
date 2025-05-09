@@ -145,6 +145,7 @@ function lib.copy_settings(game, entity)
   if not product or not product.name then return nil end
 
   return {
+    source = entity,
     name = product.name,
     ingredients = recipe.ingredients,
   }
@@ -162,6 +163,17 @@ function lib.paste_settings(game, player_index, data, target)
   elseif target.type == "inserter" then
     lib.apply_inserter_settings(game, player_index, target, data)
   end
+end
+
+-----------------------------------------------------------------------------
+-- Automatically copies settings from the target entity to connected inserters
+-- and chests, in line with the basic copy/paste semantics of the mod.
+-- @param game LuaGameScript: The game object.
+-- @param player_index number: The index of the player.
+-- @param target LuaEntity: The entity to copy from.
+-- @return nil
+function lib.autoconfigure_settings(game, player_index, target)
+  game.print('autconfigure!' .. target.name)
 end
 
 return lib

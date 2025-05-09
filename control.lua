@@ -27,6 +27,13 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   global = global or {}
   global.paste_data = global.paste_data or {}
   local data = global.paste_data[event.player_index]
+  if not data then return end
 
-  lib.paste_settings(game, event.player_index, data, selected)
+  -- Are we pasting onto the source entity and autoconfiguring?
+  if selected.name == data.source.name then
+    lib.autoconfigure_settings(game, event.player_index, selected)
+  -- Nope, just pasting to a specific other entity.
+  else
+    lib.paste_settings(game, event.player_index, data, selected)
+  end
 end)

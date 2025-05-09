@@ -53,7 +53,11 @@ function helpers.is_valid_target(game, entity)
   return entity
     and entity.valid
     and (
-      entity.type == "logistic-container"
+      -- It may seem weird to call is_valid_source here, but to enable the
+      -- autoconfigure feature, any valid source IS a valid target.
+      helpers.is_valid_source(game, entity)
+      -- And now the "normal" valid targets.
+      or entity.type == "logistic-container"
       or (entity.type == "inserter" and entity.get_or_create_control_behavior)
     )
 end
