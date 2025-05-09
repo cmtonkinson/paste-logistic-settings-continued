@@ -101,12 +101,11 @@ end
 -- @param data table: Information about the recipe being crafted.
 function lib.apply_chest_settings(game, player_index, chest, data)
   game = game or nil
-  local mode = chest.prototype.logistic_mode
 
-  if mode == "storage" then
+  if helpers.is_storage_chest(chest) then
     chest.storage_filter = prototypes.item[data.name]
 
-  elseif mode == "requester" or mode == "buffer" then
+  elseif helpers.is_requester_chest(chest) then
     local section = lib.get_or_create_section(game, chest, data)
     if data.ingredients then
       for i, ing in ipairs(data.ingredients) do
@@ -168,12 +167,41 @@ end
 -----------------------------------------------------------------------------
 -- Automatically copies settings from the target entity to connected inserters
 -- and chests, in line with the basic copy/paste semantics of the mod.
+-- When a taret CraftinMachine is copied from, and then pasted to, this function
+-- locates connected inserters (and chests connected to the inserters) and then
+-- applies the settings to them.
 -- @param game LuaGameScript: The game object.
 -- @param player_index number: The index of the player.
 -- @param target LuaEntity: The entity to copy from.
 -- @return nil
-function lib.autoconfigure_settings(game, player_index, target)
+function lib.autoconfigure_settings(game, player_index, data, target)
   game.print('autconfigure!' .. target.name)
+
+  -- Seemingly counter-intuitively, the target needs to be a valid source.
+  if not helpers.is_valid_source(target) then return end
+
+  -- Find nearby inserters.
+  local nearby_inserters = target.surface.find_entities_filtered{
+    area = helpers.get_area(target.position, 4),
+    type = "inserter",
+    force = target.force,
+  }
+
+  -- Loop through each inserter; only paste settings for inserters which are
+  -- linked to both the target and a chest in the "right" direction.
+  for _, inserter in ipairs(nearby_inserters) do
+    local pt = inserter.pickup_target
+    local dt = inserter.drop_target
+    -- Look for cases where we have an output inserter dropping into a storage chest.
+    if pt and pt == target and helpers.is_storage_chest(dt) then
+      lib.paste_settings(game, player_index, data, inserter)
+      lib.paste_settings(game, player_index, data, dt)
+    -- Look for cases where we have an input inserter pulling from a requester chest.
+    elseif dt and dt == target and helpers.is_requester_chest(pt) then
+      lib.paste_settings(game, player_index, data, pt)
+    end
+  end
 end
+
 
 return lib

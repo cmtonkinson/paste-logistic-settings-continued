@@ -40,7 +40,6 @@ end
 -- @param entity LuaEntity: THe entity to test.
 -- @return boolean: True only if the entity is valid for copying.
 function helpers.is_valid_source(game, entity)
-  game = game or nil
   return helpers.is_crafting_machine(entity) and entity.get_recipe() ~= nil
 end
 
@@ -49,7 +48,6 @@ end
 -- @param entity LuaEntity: The entity to test.
 -- @return boolean: True only if the entity is valid for copying.
 function helpers.is_valid_target(game, entity)
-  game = game or nil
   return entity
     and entity.valid
     and (
@@ -61,5 +59,53 @@ function helpers.is_valid_target(game, entity)
       or (entity.type == "inserter" and entity.get_or_create_control_behavior)
     )
 end
+
+-----------------------------------------------------------------------------
+-- Determines whether the entity is a storage chest.
+-- @param game LuaGameScript: The game object.
+-- @param entity LuaEntity: The entity to test.
+-- @return boolean: True if the entity is a storage chest, false otherwise.
+function helpers.is_storage_chest(game, entity)
+  return entity
+    and entity.valid
+    and entity.type == "logistic-container"
+    and entity.prototype.logistic_mode == "storage"
+end
+
+-----------------------------------------------------------------------------
+-- Determines whether the entity is a requester chest.
+-- @param game LuaGameScript: The game object.
+-- @param entity LuaEntity: The entity to test.
+-- @return boolean: True if the entity is a requester chest, false otherwise.
+function helpers.is_requester_chest(game, entity)
+  if not entity
+    or not entity.valid
+    or not entity.type == "logistic-container"
+  then return false end
+  local mode = entity.prototype.logistic_mode
+  return mode == "requester" or mode == "buffer"
+end
+
+-----------------------------------------------------------------------------
+-- Creates an area table a certain distance around the given entity.
+-- @param entity LuaEntity: The entity to create the area around.
+-- @param radius number: The radius of the area.
+-- @return table: The area table.
+function helpers.get_area(entity, distance)
+  if not (entity and entity.valid) then return nil end
+  if not distance or distance < 0 then distance = 0 end
+
+  return {
+    {
+      entity.position.x - distance,
+      entity.position.y - distance,
+    },
+    {
+      entity.position.x + distance,
+      entity.position.y + distance,
+    },
+  }
+end
+
 
 return helpers

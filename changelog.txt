@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.0
+Date: 2025.05.09
+  Features:
+    - Added autoconfigure support (paste back onto the crafting machine and automatically set the relevant inserters/chests.
+  Bugfixes:
+    - Fixed an implementation detail that could have caused a failure to configure requester chests if an internal lua table was not keyed continuously.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.1.4
 Date: 2025.05.08
   Info:
