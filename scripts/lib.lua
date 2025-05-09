@@ -43,7 +43,7 @@ end
 function lib.has_same_ingredient_names(game, filters, ingredients)
   game = game or nil
 
-  if #filters ~= #ingredients then return false end
+  if table_size(filters) ~= table_size(ingredients) then return false end
 
   local ingredient_names = helpers.pluck_set(ingredients, "name")
   local filter_names = helpers.pluck_set(helpers.pluck(filters, "value"), "name")
