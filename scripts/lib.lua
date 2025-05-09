@@ -5,13 +5,13 @@ local helpers = require("__paste-logistic-settings-continued__.scripts.helpers")
 -- Fallback value to use for stack sizes if all else fails.
 local DEFAULT_STACK_SIZE = 1
 
+-----------------------------------------------------------------------------
 -- Applies the settings to an inserter.
 -- @param game LuaGameScript: The game object.
 -- @param entity LuaEntity: The inserter to configure.
 -- @param data table: Information about the recipe being crafted.
 -- @return nil
 function lib.apply_inserter_settings(game, player_index, inserter, data)
-  game = game or nil
   local behavior = inserter.get_or_create_control_behavior()
   if not behavior then return end
 
@@ -41,30 +41,26 @@ end
 -- @param ingredients table: The ingredients to check against.
 -- @return boolean: True if the filters match the ingredients, false otherwise.
 function lib.has_same_ingredient_names(game, filters, ingredients)
-  game = game or nil
-
   if table_size(filters) ~= table_size(ingredients) then return false end
-
   local ingredient_names = helpers.pluck_set(ingredients, "name")
   local filter_names = helpers.pluck_set(helpers.pluck(filters, "value"), "name")
 
   for ing, _ in ipairs(ingredient_names) do
     if not filter_names[ing] then return false end
   end
-
-  -- If the cardinality of each is the same and every ingredient is a filter,
-  -- then we know the filters are the same as the ingredients.
+ 
   return true
 end
 
 -----------------------------------------------------------------------------
 -- Return a LuaLogisticSection suitable for configuring slots with the ingredients.
 -- @param game LuaGameScript: The game object.
+-- @param entity LuaEntity: The entity to configure.
+-- @param data table: Information about the recipe being crafted.
+-- @return LuaLogisticSection: The section to configure.
 -- Ensures it does not create uneccessary sections, and will override an existing
 -- section if the ingredients are the same (quantity and order may be overridden).
 function lib.get_or_create_section(game, entity, data)
-  game = game or nil
-
   -- Get the LuaLogisticPoint for the given LuaEntity.
   local point = entity.get_logistic_point(0)
   if not point then return end
@@ -99,9 +95,8 @@ end
 -- @param game LuaGameScript: The game object.
 -- @param entity LuaEntity: The chest to copy to.
 -- @param data table: Information about the recipe being crafted.
+-- @return nil
 function lib.apply_chest_settings(game, player_index, chest, data)
-  game = game or nil
-
   if helpers.is_storage_chest(chest) then
     chest.storage_filter = prototypes.item[data.name]
 
@@ -136,7 +131,6 @@ end
 -- @param entity LuaEntity: The entity to copy from.
 -- @return table: Information about the recipe being crafted.
 function lib.copy_settings(game, entity)
-  game = game or nil
   local recipe = entity.get_recipe()
   if not recipe then return nil end
 
@@ -155,8 +149,8 @@ end
 -- @param game LuaGameScript: The game object.
 -- @param data table: Information about the recipe being crafted.
 -- @param target LuaEntity: The entity to copy to.
+-- @return nil
 function lib.paste_settings(game, player_index, data, target)
-  game = game or nil
   if target.type == "logistic-container" then
     lib.apply_chest_settings(game, player_index, target, data)
   elseif target.type == "inserter" then

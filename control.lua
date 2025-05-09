@@ -30,12 +30,12 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   if not data then return end
 
   -- Are we pasting onto the source entity* and autoconfiguring?
-  -- *More specficially, are we pasting onto an entity with the same name as
-  -- the source entity? This allows us to copy from one CraftingMachine and
-  -- autoconfigure to many others.
+  -- *More specficially, are we pasting onto an entity /with the same name
+  -- as the/ source entity? This allows us to copy from one CraftingMachine
+  -- and autoconfigure to many others.
   if selected.name == data.source.name then
     lib.autoconfigure_settings(game, event.player_index, data, selected)
-  -- Nope, just pasting to a specific other entity.
+  -- Nope, just pasting to an inserter or chest.
   else
     lib.paste_settings(game, event.player_index, data, selected)
   end
