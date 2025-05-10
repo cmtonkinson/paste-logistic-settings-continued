@@ -27,6 +27,33 @@ function helpers.pluck_set(tbl, key)
 end
 
 -----------------------------------------------------------------------------
+-- TODO: FIXME
+-- Resolves the entity to its prototype and name.
+-- @param game LuaGameScript: The game object.
+-- @param entity LuaEntity: The entity to resolve.
+-- @return table: A table containing the resolved entity information.
+function helpers.resolve_entity(game, entity)
+  if not entity or not entity.valid then return nil end
+
+  if entity.name == "entity-ghost" then
+    local proto = entity.ghost_prototype
+    return {
+      is_ghost = true,
+      entity = entity,
+      prototype = proto,
+      name = proto and proto.name
+    }
+  else
+    return {
+      is_ghost = false,
+      entity = entity,
+      prototype = entity.prototype,
+      name = entity.name
+    }
+  end
+end
+
+-----------------------------------------------------------------------------
 -- Determines whether the entity is a crafting machine.
 -- @param entity LuaEntity: The entity to test.
 -- @return boolean: True if the entity is a crafting machine, false otherwise.
