@@ -45,7 +45,12 @@ After:
 If there is alredy an empty logistic group, it will be used instead of creating a new one. If there is an existing logistic group that contains the same types of ingredients, it will be overridden.
 
 **Note:** In order for the mod to override an existing logistic group:
-1. It must not be named - this is a protection built-in to prevent any unwanted side effects.
-2. It MUST contain a filter for every ingredient.
-3. It must contain filters ONLY for ingredients of the recipe.
+1. It must not be named (this is a protection built-in to prevent any unwanted side effects).
+2. It must contain a filter for every ingredient of the recipe.
+3. It must contain filters only for ingredients of the recipe.
+
+#### Automatic configuration
+Pasting back onto the crafting machine (or any crafting machine of the same type) will find all inserter/chest pairs associated with the machine.
+1. For an requester chest feeding the machine via inserter, the chests requests will be configured.
+2. For a storage chest being fed from the machine via inserter, both inserter and chest will be configured.
 
