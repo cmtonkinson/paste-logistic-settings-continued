@@ -68,7 +68,7 @@ function lib.get_or_create_section(game, entity, data)
   -- If there are existing sections...
   if point.sections_count > 0 then
     -- Is there an empty, unnamed section? Return that.
-    for i, sec in ipairs(point.sections) do
+    for _, sec in ipairs(point.sections) do
       if sec.filters_count == 0 and sec.group == "" then
         return sec
       end
@@ -96,12 +96,12 @@ end
 -- @param entity LuaEntity: The chest to copy to.
 -- @param data table: Information about the recipe being crafted.
 -- @return nil
-function lib.apply_chest_settings(game, player_index, chest, data)
-  if helpers.is_storage_chest(chest) then
-    chest.storage_filter = prototypes.item[data.name]
+function lib.apply_chest_settings(game, player_index, entity, data)
+  if helpers.is_storage_chest(game, entity) then
+    entity.storage_filter = prototypes.item[data.name]
 
-  elseif helpers.is_requester_chest(chest) then
-    local section = lib.get_or_create_section(game, chest, data)
+  elseif helpers.is_requester_chest(game, entity) then
+    local section = lib.get_or_create_section(game, entity, data)
     if data.ingredients then
       for i, ing in ipairs(data.ingredients) do
         local proto = prototypes.item[ing.name]
@@ -150,7 +150,7 @@ end
 -- @param data table: Information about the recipe being crafted.
 -- @param target LuaEntity: The entity to copy to.
 -- @return nil
-function lib.paste_settings(game, player_index, data, target)
+function lib.paste_settings(game, player_index, target, data)
   if target.type == "logistic-container" then
     lib.apply_chest_settings(game, player_index, target, data)
   elseif target.type == "inserter" then
@@ -168,15 +168,13 @@ end
 -- @param player_index number: The index of the player.
 -- @param target LuaEntity: The entity to copy from.
 -- @return nil
-function lib.autoconfigure_settings(game, player_index, data, target)
-  game.print('autconfigure!' .. target.name)
+function lib.autoconfigure_settings(game, player_index, target, data)
 
   -- Seemingly counter-intuitively, the target needs to be a valid source.
-  if not helpers.is_valid_source(target) then return end
-
+  if not helpers.is_valid_source(game, target) then return end
   -- Find nearby inserters.
   local nearby_inserters = target.surface.find_entities_filtered{
-    area = helpers.get_area(target.position, 4),
+    area = helpers.get_area(game, target, 4),
     type = "inserter",
     force = target.force,
   }
@@ -187,12 +185,12 @@ function lib.autoconfigure_settings(game, player_index, data, target)
     local pt = inserter.pickup_target
     local dt = inserter.drop_target
     -- Look for cases where we have an output inserter dropping into a storage chest.
-    if pt and pt == target and helpers.is_storage_chest(dt) then
-      lib.paste_settings(game, player_index, data, inserter)
-      lib.paste_settings(game, player_index, data, dt)
+    if pt and pt == target and helpers.is_storage_chest(game, dt) then
+      lib.paste_settings(game, player_index, inserter, data)
+      lib.paste_settings(game, player_index, dt, data)
     -- Look for cases where we have an input inserter pulling from a requester chest.
-    elseif dt and dt == target and helpers.is_requester_chest(pt) then
-      lib.paste_settings(game, player_index, data, pt)
+    elseif dt and dt == target and helpers.is_requester_chest(game, pt) then
+      lib.paste_settings(game, player_index, pt, data)
     end
   end
 end

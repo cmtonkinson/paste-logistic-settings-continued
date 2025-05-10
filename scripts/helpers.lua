@@ -30,7 +30,7 @@ end
 -- Determines whether the entity is a crafting machine.
 -- @param entity LuaEntity: The entity to test.
 -- @return boolean: True if the entity is a crafting machine, false otherwise.
-function helpers.is_crafting_machine(entity)
+function helpers.is_crafting_machine(game, entity)
   if not (entity and entity.valid) then return false end
   return pcall(entity.get_recipe, entity)
 end
@@ -40,7 +40,7 @@ end
 -- @param entity LuaEntity: THe entity to test.
 -- @return boolean: True only if the entity is valid for copying.
 function helpers.is_valid_source(game, entity)
-  return helpers.is_crafting_machine(entity) and entity.get_recipe() ~= nil
+  return helpers.is_crafting_machine(game, entity) and entity.get_recipe() ~= nil
 end
 
 -----------------------------------------------------------------------------
@@ -91,7 +91,7 @@ end
 -- @param entity LuaEntity: The entity to create the area around.
 -- @param radius number: The radius of the area.
 -- @return table: The area table.
-function helpers.get_area(entity, distance)
+function helpers.get_area(game, entity, distance)
   if not (entity and entity.valid) then return nil end
   if not distance or distance < 0 then distance = 0 end
 

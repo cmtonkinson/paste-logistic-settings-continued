@@ -8,21 +8,21 @@ local EVENT_NAMESPACE = "paste-logistic-settings-continued"
 -- Copy hotkey
 script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
   local player = game.players[event.player_index]
-  local selected = player.selected
-  if not helpers.is_valid_source(game, selected) then return end
+  local target = player.selected
+  if not helpers.is_valid_source(game, target) then return end
 
   global = global or {}
   global.paste_data = global.paste_data or {}
 
-  global.paste_data[event.player_index] = lib.copy_settings(game, selected)
+  global.paste_data[event.player_index] = lib.copy_settings(game, target)
 end)
 
 -----------------------------------------------------------------------------
 -- Paste hotkey
 script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   local player = game.players[event.player_index]
-  local selected = player.selected
-  if not helpers.is_valid_target(game, selected) then return end
+  local target = player.selected
+  if not helpers.is_valid_target(game, target) then return end
 
   global = global or {}
   global.paste_data = global.paste_data or {}
@@ -33,10 +33,10 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   -- *More specficially, are we pasting onto an entity /with the same name
   -- as the/ source entity? This allows us to copy from one CraftingMachine
   -- and autoconfigure to many others.
-  if selected.name == data.source.name then
-    lib.autoconfigure_settings(game, event.player_index, data, selected)
+  if target.name == data.source.name then
+    lib.autoconfigure_settings(game, event.player_index, target, data)
   -- Nope, just pasting to an inserter or chest.
   else
-    lib.paste_settings(game, event.player_index, data, selected)
+    lib.paste_settings(game, event.player_index, target, data)
   end
 end)
