@@ -87,6 +87,23 @@ function helpers.is_requester_chest(game, entity)
 end
 
 -----------------------------------------------------------------------------
+-- Returns how many items should be allowed/requested.
+-- @param game LuaGameScript: The game object.
+-- @param prototype LuaItemPrototype: The item prototype.
+-- @param type string: The type of limit to apply (stacks or items).
+-- @param limit number: The limit to apply.
+-- @return number: The calculated limit.
+function helpers.get_limit(game, prototype, type, limit)
+  local result = 0
+  if type == "stacks" then
+    result = prototype.stack_size * limit
+  elseif type == "items" then
+    result = limit
+  end
+  return result
+end
+
+-----------------------------------------------------------------------------
 -- Creates an area table a certain distance around the given entity.
 -- @param entity LuaEntity: The entity to create the area around.
 -- @param radius number: The radius of the area.

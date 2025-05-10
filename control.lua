@@ -40,3 +40,23 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
     lib.paste_settings(game, event.player_index, target, data)
   end
 end)
+
+-----------------------------------------------------------------------------
+-- Migrations
+script.on_configuration_changed(function(data)
+  -- Migrations to 1.3.0
+  for _,player in pairs(game.players) do
+    local ps = settings.get_player_settings(player)
+
+    local output_limit = ps["paste-logistic-settings-continued-output-limit"]
+    local request_size = ps["paste-logistic-settings-continued-request-size"]
+
+    if output_limit and output_limit.value < 1 then
+      player.print({"msg.paste-logistic-settings-continued-output-limit-migration"})
+    end
+    if request_size and request_size.value < 1 then
+      player.print({"msg.paste-logistic-settings-continued-request-size-migration"})
+    end
+  end
+end)
+

@@ -15,21 +15,16 @@ function lib.apply_inserter_settings(game, player_index, inserter, data)
   local behavior = inserter.get_or_create_control_behavior()
   if not behavior then return end
 
-  -- The runtime per user setting `output-limit` controls how many of the item
-  -- the inserter will allow into the network. A (default) value of 0 means use
-  -- the native stack size of the item and a positive value overrides that
-  -- behavior.
-  local item_proto = prototypes.item[data.name]
+  local proto = prototypes.item[data.name]
+  local output_limit_type = settings.get_player_settings(player_index)["paste-logistic-settings-continued-output-limit-type"].value
   local output_limit = settings.get_player_settings(player_index)["paste-logistic-settings-continued-output-limit"].value
-  if output_limit == 0 then
-    output_limit = item_proto and item_proto.stack_size or DEFAULT_STACK_SIZE
-  end
+  local limit = helpers.get_limit(game, proto, output_limit_type, output_limit)
 
   behavior.connect_to_logistic_network = true
   behavior.logistic_condition = {
     comparator = "<",
-    first_signal = { type = "item", name = data.name},
-    constant = output_limit,
+    first_signal = { type = "item", name = data.name },
+    constant = limit,
   }
 end
 
@@ -48,7 +43,7 @@ function lib.has_same_ingredient_names(game, filters, ingredients)
   for ing, _ in ipairs(ingredient_names) do
     if not filter_names[ing] then return false end
   end
- 
+
   return true
 end
 
@@ -105,19 +100,15 @@ function lib.apply_chest_settings(game, player_index, entity, data)
     if data.ingredients then
       for i, ing in ipairs(data.ingredients) do
         local proto = prototypes.item[ing.name]
-        -- The runtime per user setting `request-size` controls how many of each
-        -- ingredient the chest will request. A (default) value of 0 means use the
-        -- native stack size of each item. A positive value overrides that behavior.
+        local request_size_type = settings.get_player_settings(player_index)["paste-logistic-settings-continued-request-size-type"].value
         local request_size = settings.get_player_settings(player_index)["paste-logistic-settings-continued-request-size"].value
-        if request_size == 0 then
-          request_size = proto and proto.stack_size or DEFAULT_STACK_SIZE
-        end
+        local quota = helpers.get_limit(game, proto, request_size_type, request_size)
 
         if proto then
           section.set_slot(i, {
             value = ing.name,
             mode = "at-least",
-            min = request_size,
+            min = quota,
           })
         end
       end

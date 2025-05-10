@@ -2,10 +2,10 @@
 A huge thanks to Ezza for the original Paste Logistic Settings mod. This is a spiritual successor to that excellent utility.
 
 # Overview
-This mod makes setting up bot malls easier. You can already shift+copy/paste from assemblers to requester chests, but this mod allows you to configure inserters and storage chests as well, saving a ton of time and clicking.
+This mod makes setting up bot malls easier. You can already copy/paste from assemblers to requester chests, but this mod allows you to quickly configure inserters and storage chests as well, saving a ton of time and tedious clicking.
 
 # Features
-Copy a recipe from any crafting machine (assembler, chemical plant, furnace, etc.) with `control + shift + right click`. Then, you can paste using `control + shift + left click` onto:
+Copy a recipe from any crafting machine (assembler, chemical plant, furnace, etc.) using `control + shift + right click`. Then, you can paste using `control + shift + left click` onto:
 
 ![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/assembler.png?ref_type=heads)
 
@@ -54,3 +54,5 @@ Pasting back onto the crafting machine (or any crafting machine of the same type
 1. For an requester chest feeding the machine via inserter, the chests requests will be configured.
 2. For a storage chest being fed from the machine via inserter, both inserter and chest will be configured.
 
+# Settings
+There are per user, runtime mod settings to control how many stacks or items are requested by requester chests, or allowed into storage chests.
