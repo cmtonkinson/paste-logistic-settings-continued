@@ -27,8 +27,8 @@ function helpers.pluck_set(tbl, key)
 end
 
 -----------------------------------------------------------------------------
--- TODO: FIXME
--- Resolves the entity to its prototype and name.
+-- Given an entity which could be real or ghost, this returns a table with
+-- standardized information about the entity.
 -- @param game LuaGameScript: The game object.
 -- @param entity LuaEntity: The entity to resolve.
 -- @return table: A table containing the resolved entity information.
@@ -36,19 +36,18 @@ function helpers.resolve_entity(game, entity)
   if not entity or not entity.valid then return nil end
 
   if entity.name == "entity-ghost" then
-    local proto = entity.ghost_prototype
     return {
       is_ghost = true,
+      name = entity.ghost_name,
       entity = entity,
-      prototype = proto,
-      name = proto and proto.name
+      prototype = entity.ghost_prototype,
     }
   else
     return {
       is_ghost = false,
+      name = entity.name,
       entity = entity,
       prototype = entity.prototype,
-      name = entity.name
     }
   end
 end

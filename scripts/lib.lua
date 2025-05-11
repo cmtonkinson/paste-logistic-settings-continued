@@ -1,9 +1,5 @@
 local lib = {}
-
 local helpers = require("__paste-logistic-settings-continued__.scripts.helpers")
-
--- Fallback value to use for stack sizes if all else fails.
-local DEFAULT_STACK_SIZE = 1
 
 -----------------------------------------------------------------------------
 -- Applies the settings to an inserter.
