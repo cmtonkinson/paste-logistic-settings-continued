@@ -1,5 +1,5 @@
-local helpers = require("__paste-logistic-settings-continued__.scripts.helpers")
-local lib = require("__paste-logistic-settings-continued__.scripts.lib")
+local helpers = require("__paste-logistic-settings-continued__.src.helpers")
+local lib = require("__paste-logistic-settings-continued__.src.lib")
 
 -- Prefix all events to avoid conflicts.
 local EVENT_NAMESPACE = "paste-logistic-settings-continued"

@@ -1,5 +1,5 @@
 local lib = {}
-local helpers = require("__paste-logistic-settings-continued__.scripts.helpers")
+local helpers = require("__paste-logistic-settings-continued__.src.helpers")
 
 -----------------------------------------------------------------------------
 -- Applies the settings to an inserter.

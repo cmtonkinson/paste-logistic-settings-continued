@@ -1,5 +1,5 @@
 local _lib = require("test._lib")
-local helpers = require("scripts.helpers")
+local helpers = require("src.helpers")
 
 -----------------------------------------------------------------------------
 local tbl1 = {
@@ -24,9 +24,9 @@ local entity = {
   valid = true,
   position = {x=1, y=2},
 }
-_lib.assert_equal(helpers.get_area(entity, 3), {{-2, -1}, {4, 5}}, "get_area failed")
-_lib.assert_equal(helpers.get_area(nil, 3), nil, "get_area failed")
-_lib.assert_equal(helpers.get_area(entity, -99), {{1, 2}, {1, 2}}, "get_area failed")
+_lib.assert_equal(helpers.get_area(nil, entity, 3), {{-2, -1}, {4, 5}}, "get_area failed")
+_lib.assert_equal(helpers.get_area(nil, nil, 3), nil, "get_area failed")
+_lib.assert_equal(helpers.get_area(nil, entity, -99), {{1, 2}, {1, 2}}, "get_area failed")
 
 -----------------------------------------------------------------------------
 print("All tests passed!")

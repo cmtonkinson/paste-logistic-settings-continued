@@ -9,8 +9,8 @@ RELEASE_FILES=(
   data.lua
   info.json
   locale
-  scripts
   settings.lua
+  src 
   thumbnail.png
 )
 OLD_VERSIONS="old-releases"
