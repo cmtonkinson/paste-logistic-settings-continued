@@ -35,7 +35,7 @@ end
 function helpers.resolve_entity(game, entity)
   if not entity or not entity.valid then return nil end
 
-  if entity.name == "entity-ghost" then
+  if entity.type == "entity-ghost" then
     return {
       is_ghost = true,
       name = entity.ghost_name,
