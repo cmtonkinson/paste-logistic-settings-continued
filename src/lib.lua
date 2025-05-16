@@ -90,17 +90,15 @@ end
 function lib.apply_chest_settings(game, player_index, entity, data)
   if helpers.is_storage_chest(game, entity) then
     entity.storage_filter = prototypes.item[data.name]
-
   elseif helpers.is_requester_chest(game, entity) then
     local section = lib.get_or_create_section(game, entity, data)
-    if data.ingredients then
+    if data and data.ingredients then
       for i, ing in ipairs(data.ingredients) do
         local proto = prototypes.item[ing.name]
-        local request_size_type = settings.get_player_settings(player_index)["paste-logistic-settings-continued-request-size-type"].value
-        local request_size = settings.get_player_settings(player_index)["paste-logistic-settings-continued-request-size"].value
-        local quota = helpers.get_limit(game, proto, request_size_type, request_size)
-
-        if proto then
+        if proto then -- e.g. fluids don't have a useful prototype
+          local request_size_type = settings.get_player_settings(player_index)["paste-logistic-settings-continued-request-size-type"].value
+          local request_size = settings.get_player_settings(player_index)["paste-logistic-settings-continued-request-size"].value
+          local quota = helpers.get_limit(game, proto, request_size_type, request_size)
           section.set_slot(i, {
             value = ing.name,
             mode = "at-least",
