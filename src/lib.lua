@@ -9,9 +9,11 @@ local helpers = require("__paste-logistic-settings-continued__.src.helpers")
 -- @return nil
 function lib.apply_inserter_settings(game, player_index, inserter, data)
   local behavior = inserter.get_or_create_control_behavior()
+  if not data then return end
   if not behavior then return end
 
   local proto = prototypes.item[data.name]
+  if not proto then return end -- e.g. fluids don't have a useful prototype
   local output_limit_type = settings.get_player_settings(player_index)["paste-logistic-settings-continued-output-limit-type"].value
   local output_limit = settings.get_player_settings(player_index)["paste-logistic-settings-continued-output-limit"].value
   local limit = helpers.get_limit(game, proto, output_limit_type, output_limit)
@@ -120,7 +122,8 @@ function lib.copy_settings(game, entity)
   if not recipe then return nil end
 
   local product = recipe.products and recipe.products[1]
-  if not product or not product.name then return nil end
+  if not product or not product.name then return nil end -- maybe an error?
+  if not prototypes.item[product.name] then return nil end -- maybe a fluid?
 
   -- We only want to deal with items, not fluids, so we check prototypes
   -- and ignore fluids.
