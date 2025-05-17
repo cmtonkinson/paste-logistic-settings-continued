@@ -122,10 +122,24 @@ function lib.copy_settings(game, entity)
   local product = recipe.products and recipe.products[1]
   if not product or not product.name then return nil end
 
+  -- We only want to deal with items, not fluids, so we check prototypes
+  -- and ignore fluids.
+  local item_ingredients = {}
+  for _, ing in ipairs(recipe.ingredients) do
+    local proto = prototypes.item[ing.name]
+    if proto then
+      table.insert(item_ingredients, {
+        name = ing.name,
+        amount = ing.amount,
+        stack_size = proto.stack_size,
+      })
+    end
+  end
+
   return {
     source = entity,
     name = product.name,
-    ingredients = recipe.ingredients,
+    ingredients = item_ingredients,
   }
 end
 
