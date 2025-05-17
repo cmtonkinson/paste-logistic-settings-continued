@@ -12,6 +12,8 @@ function lib.apply_inserter_settings(game, player_index, inserter, data)
   if not data then return end
   if not behavior then return end
 
+  if not data.item then return end -- happens when the output is a fluid
+
   local proto = prototypes.item[data.name]
   if not proto then return end -- e.g. fluids don't have a useful prototype
   local output_limit_type = settings.get_player_settings(player_index)["paste-logistic-settings-continued-output-limit-type"].value
@@ -91,6 +93,7 @@ end
 -- @return nil
 function lib.apply_chest_settings(game, player_index, entity, data)
   if helpers.is_storage_chest(game, entity) then
+    if not data.item then return end -- happens when the output is a fluid
     entity.storage_filter = prototypes.item[data.name]
   elseif helpers.is_requester_chest(game, entity) then
     local section = lib.get_or_create_section(game, entity, data)
@@ -118,12 +121,25 @@ end
 -- @param entity LuaEntity: The entity to copy from.
 -- @return table: Information about the recipe being crafted.
 function lib.copy_settings(game, entity)
+  local data = {}
   local recipe = entity.get_recipe()
   if not recipe then return nil end
 
-  local product = recipe.products and recipe.products[1]
-  if not product or not product.name then return nil end -- maybe an error?
-  if not prototypes.item[product.name] then return nil end -- maybe a fluid?
+  data.source = entity
+
+  local product = nil
+  if recipe.products then
+    for _, prod in ipairs(recipe.products) do
+      if prototypes.item[prod.name] then
+        product = prod
+        break
+      end
+    end
+  end
+  if product and product.name then
+    data.item = true
+    data.name = product.name
+  end
 
   -- We only want to deal with items, not fluids, so we check prototypes
   -- and ignore fluids.
@@ -138,12 +154,9 @@ function lib.copy_settings(game, entity)
       })
     end
   end
+  data.ingredients = item_ingredients
 
-  return {
-    source = entity,
-    name = product.name,
-    ingredients = item_ingredients,
-  }
+  return data
 end
 
 -----------------------------------------------------------------------------
