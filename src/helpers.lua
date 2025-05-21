@@ -150,5 +150,21 @@ function helpers.get_area(game, entity, distance)
   }
 end
 
+function helpers.get_quality_string(quality_id)
+  local mapping = {
+    [0] = "normal",
+    [1] = "uncommon",
+    [2] = "rare",
+    [3] = "epic",
+    [5] = "legendary",
+  }
+  if not quality_id or mapping[quality_id] == nil then
+    return "normal"
+  else
+    return mapping[quality_id]
+  end
+end
+
+
 
 return helpers

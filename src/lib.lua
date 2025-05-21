@@ -23,7 +23,7 @@ function lib.apply_inserter_settings(game, player_index, inserter, data)
   behavior.connect_to_logistic_network = true
   behavior.logistic_condition = {
     comparator = "<",
-    first_signal = { type = "item", name = data.name },
+    first_signal = { type = "item", name = data.name, quality = helpers.get_quality_string(data.quality) },
     constant = limit,
   }
 end
@@ -37,6 +37,7 @@ end
 -- @return boolean: True if the filters match the ingredients, false otherwise.
 function lib.has_same_ingredient_names(game, filters, ingredients)
   if table_size(filters) ~= table_size(ingredients) then return false end
+
   local ingredient_names = helpers.pluck_set(ingredients, "name")
   local filter_names = helpers.pluck_set(helpers.pluck(filters, "value"), "name")
 
@@ -92,9 +93,13 @@ end
 -- @param data table: Information about the recipe being crafted.
 -- @return nil
 function lib.apply_chest_settings(game, player_index, entity, data)
+  local quality_string = helpers.get_quality_string(data.quality)
   if helpers.is_storage_chest(game, entity) then
     if not data.item then return end -- happens when the output is a fluid
-    entity.storage_filter = prototypes.item[data.name]
+    entity.storage_filter = {
+      name    = prototypes.item[data.name],
+      quality = quality_string,
+    }
   elseif helpers.is_requester_chest(game, entity) then
     local section = lib.get_or_create_section(game, entity, data)
     if data and data.ingredients then
@@ -105,7 +110,10 @@ function lib.apply_chest_settings(game, player_index, entity, data)
           local request_size = settings.get_player_settings(player_index)["paste-logistic-settings-continued-request-size"].value
           local quota = helpers.get_limit(game, proto, request_size_type, request_size)
           section.set_slot(i, {
-            value = ing.name,
+            value = {
+              name = ing.name,
+              quality = quality_string,
+            },
             mode = "at-least",
             min = quota,
           })
@@ -122,10 +130,11 @@ end
 -- @return table: Information about the recipe being crafted.
 function lib.copy_settings(game, entity)
   local data = {}
-  local recipe = entity.get_recipe()
+  local recipe, quality = entity.get_recipe()
   if not recipe then return nil end
 
   data.source = entity
+  quality = quality or 1
 
   local product = nil
   if recipe.products then
@@ -137,8 +146,9 @@ function lib.copy_settings(game, entity)
     end
   end
   if product and product.name then
-    data.item = true
-    data.name = product.name
+    data.item    = true
+    data.name    = product.name
+    data.quality = quality.level
   end
 
   -- We only want to deal with items, not fluids, so we check prototypes
@@ -148,9 +158,10 @@ function lib.copy_settings(game, entity)
     local proto = prototypes.item[ing.name]
     if proto then
       table.insert(item_ingredients, {
-        name = ing.name,
-        amount = ing.amount,
+        name       = ing.name,
+        amount     = ing.amount,
         stack_size = proto.stack_size,
+        quality    = data.quality
       })
     end
   end
