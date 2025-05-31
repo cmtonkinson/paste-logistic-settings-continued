@@ -16,8 +16,6 @@ Pasting to an inserter will:
 
 ![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/outserter.png?ref_type=heads)
 
-You can override the stack behavior with the "Output limit" mod setting. By default this is set to "0" (which is a special value meaning "one stack") but setting it to any positive integer will cause the inserter limit to be set to that specific value (not stacks). A common use case would be to set this to "1" if you didn't want to be buffering full stacks of things.
-
 #### Storage Chests
 Pasting to a storage chest will:
 1. Set the logistics filter of the storage chest to the item being copied
@@ -31,6 +29,9 @@ Pasting to a requester chest will:
 ![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/requester-chest.png?ref_type=heads)
 
 If there is alredy an empty logistic group, it will be used instead of creating a new one. If there is an existing logistic group that contains the same types of ingredients, it will be overridden.
+
+**Configuration:**
+The amount of ingredients requested, and outputs allowed, are all runtime user settings.
 
 **Note:** In order for the mod to override an existing logistic group:
 1. It must not be named (this is a protection built-in to prevent any unwanted side effects).
