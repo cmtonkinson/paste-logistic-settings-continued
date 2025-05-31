@@ -22,12 +22,13 @@ end)
 script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   local player = game.players[event.player_index]
   local target = player.selected
+  if not target or not target.valid then return end
   if not helpers.is_valid_target(game, target) then return end
 
   global = global or {}
   global.paste_data = global.paste_data or {}
   local data = global.paste_data[event.player_index]
-  if not data then return end
+  if not data or not data.source then return end
 
   -- Are we pasting onto the source entity* and autoconfiguring?
   -- *More specficially, are we pasting onto an entity /with the same name

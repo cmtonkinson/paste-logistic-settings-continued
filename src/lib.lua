@@ -211,11 +211,11 @@ function lib.autoconfigure_settings(game, player_index, target, data)
     local pt = inserter.pickup_target
     local dt = inserter.drop_target
     -- Look for cases where we have an output inserter dropping into a storage chest.
-    if pt and pt == target and helpers.is_storage_chest(game, dt) then
+    if pt and pt.valid and pt == target and helpers.is_storage_chest(game, dt) then
       lib.paste_settings(game, player_index, inserter, data)
       lib.paste_settings(game, player_index, dt, data)
     -- Look for cases where we have an input inserter pulling from a requester chest.
-    elseif dt and dt == target and helpers.is_requester_chest(game, pt) then
+    elseif dt and dt.valid and dt == target and helpers.is_requester_chest(game, pt) then
       lib.paste_settings(game, player_index, pt, data)
     end
   end
