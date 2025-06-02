@@ -14,7 +14,7 @@ script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
   global = global or {}
   global.paste_data = global.paste_data or {}
 
-  global.paste_data[event.player_index] = lib.copy_settings(game, target)
+  global.paste_data[event.player_index] = lib.copy_settings(game, player, target)
 end)
 
 -----------------------------------------------------------------------------
@@ -35,10 +35,10 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   -- as the/ source entity? This allows us to copy from one CraftingMachine
   -- and autoconfigure to many others.
   if target.name == data.source.name then
-    lib.autoconfigure_settings(game, event.player_index, target, data)
+    lib.autoconfigure_settings(game, player, target, data)
   -- Nope, just pasting to an inserter or chest.
   else
-    lib.paste_settings(game, event.player_index, target, data)
+    lib.paste_settings(game, player, target, data)
   end
 end)
 
