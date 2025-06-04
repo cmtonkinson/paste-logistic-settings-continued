@@ -5,7 +5,7 @@ A huge thanks to Ezza for the original Paste Logistic Settings mod. This is a sp
 This mod makes setting up bot malls easier. You can already copy/paste from assemblers to requester chests, but this mod allows you to quickly configure inserters and storage chests as well, saving a ton of time and tedious clicking.
 
 # Features
-Copy a recipe from any crafting machine (assembler, chemical plant, furnace, etc.) using `control + shift + right click`. Then, you can paste using `control + shift + left click` onto:
+Copy a recipe from any crafting machine (assembler, chemical plant, furnace, etc.) using `control + shift + right click`  and paste using `control + shift + left click`. Since the mod uses the same modifier keys as super force build, to prevent any unintended interactions it will not activate if there is anything held in the cursor (items, ghosts, blueprints, upgrade planners, etc).
 
 ![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/assembler.png?ref_type=heads)
 
@@ -30,7 +30,7 @@ Pasting to a requester chest will:
 
 If there is alredy an empty logistic group, it will be used instead of creating a new one. If there is an existing logistic group that contains the same types of ingredients, it will be overridden.
 
-**Configuration:**
+# Configuration:
 The amount of ingredients requested, and outputs allowed, are all runtime user settings.
 
 **Note:** In order for the mod to override an existing logistic group:
@@ -40,8 +40,8 @@ The amount of ingredients requested, and outputs allowed, are all runtime user s
 
 #### Automatic configuration
 Pasting back onto the crafting machine (or any crafting machine of the same type) will find all inserter/chest pairs associated with the machine.
-1. For an requester chest feeding the machine via inserter, the chests requests will be configured.
+1. For a requester chest feeding the machine via inserter, the chests requests will be configured.
 2. For a storage chest being fed from the machine via inserter, both inserter and chest will be configured.
 
-# Settings
-There are per user, runtime mod settings to control how many stacks or items are requested by requester chests, or allowed into storage chests.
+# Known Issues
+You can submit any feedback here in a discussion thread, but you can also track and submit issues on [GitLab](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/issues).
