@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.3.8
+Date: 2025.06.03
+  Fixes:
+    - Fix crash when super force building by preventing mod activation while holding any item, ghost, or blueprint.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.3.7
 Date: 2025.05.31
   Fixes:

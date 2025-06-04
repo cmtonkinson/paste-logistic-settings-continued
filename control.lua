@@ -9,6 +9,7 @@ local EVENT_NAMESPACE = "paste-logistic-settings-continued"
 script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
   local player = game.players[event.player_index]
   local target = player.selected
+  if helpers.is_holding_anything(game, player, event) then return end
   if not helpers.is_valid_source(game, target) then return end
 
   global = global or {}
@@ -22,6 +23,7 @@ end)
 script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   local player = game.players[event.player_index]
   local target = player.selected
+  if helpers.is_holding_anything(game, player, event) then return end
   if not target or not target.valid then return end
   if not helpers.is_valid_target(game, target) then return end
 

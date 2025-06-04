@@ -165,6 +165,19 @@ function helpers.get_quality_string(quality_id)
   end
 end
 
+-----------------------------------------------------------------------------
+--- Determines whether the player is holding anything. Used to prevent mod
+--- activation in cases where the player is trying to super force build
+--- anything since the two use the same modifier keys.
+--- @param game LuaGameScript: The game object.
+--- @param player LuaPlayer: The player to check.
+--- @param event LuaEvent: The event that triggered the check.
+function helpers.is_holding_anything(game, player, event)
+  if not player.is_cursor_empty() then
+    return true
+  end
+end
+
 
 
 return helpers
