@@ -23,6 +23,7 @@ end)
 script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   local player = game.players[event.player_index]
   local target = player.selected
+  if not target or not target.valid then return end
   if helpers.is_holding_anything(game, player, event) then return end
   if not target or not target.valid then return end
   if not helpers.is_valid_target(game, target) then return end
