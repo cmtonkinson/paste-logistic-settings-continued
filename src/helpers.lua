@@ -106,7 +106,7 @@ end
 function helpers.is_requester_chest(game, entity)
   if not entity
     or not entity.valid
-    or not entity.type == "logistic-container"
+    or entity.type ~= "logistic-container"
   then return false end
   local mode = entity.prototype.logistic_mode
   return mode == "requester" or mode == "buffer"

@@ -41,7 +41,7 @@ function lib.has_same_ingredient_names(game, player, filters, ingredients)
   local ingredient_names = helpers.pluck_set(ingredients, "name")
   local filter_names = helpers.pluck_set(helpers.pluck(filters, "value"), "name")
 
-  for ing, _ in ipairs(ingredient_names) do
+  for ing, _ in pairs(ingredient_names) do
     if ing ~= '' and not filter_names[ing] then return false end
   end
 
@@ -97,7 +97,7 @@ function lib.apply_chest_settings(game, player, entity, data)
   if helpers.is_storage_chest(game, entity) then
     if not data.item then return end -- happens when the output is a fluid
     entity.storage_filter = {
-      name    = prototypes.item[data.name],
+      name    = data.name,
       quality = quality_string,
     }
   elseif helpers.is_requester_chest(game, entity) then
