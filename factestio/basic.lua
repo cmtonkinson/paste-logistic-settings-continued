@@ -1,11 +1,4 @@
-local function require_plsc_module(module_name)
-  if _G.script == nil then
-    return require("src." .. module_name)
-  end
-  return require("__paste-logistic-settings-continued__.src." .. module_name)
-end
-
-local lib = require_plsc_module("lib")
+local lib = require("src.lib")
 
 local function with_mocked_player_settings(overrides, fn)
   local real_settings = settings

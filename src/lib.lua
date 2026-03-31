@@ -1,13 +1,16 @@
 local lib = {}
 
-local function require_plsc_module(module_name)
-  if _G.script == nil then
-    return require("src." .. module_name)
-  end
-  return require("__paste-logistic-settings-continued__.src." .. module_name)
-end
+local helpers = require("src.helpers")
 
-local helpers = require_plsc_module("helpers")
+local function item_ingredients_only(ingredients)
+  local filtered = {}
+  for _, ingredient in ipairs(ingredients or {}) do
+    if prototypes.item[ingredient.name] then
+      filtered[#filtered + 1] = ingredient
+    end
+  end
+  return filtered
+end
 
 -----------------------------------------------------------------------------
 -- Applies the settings to an inserter.
@@ -27,6 +30,19 @@ function lib.apply_inserter_settings(game, player, inserter, data)
   local output_limit_type = settings.get_player_settings(player.index)["paste-logistic-settings-continued-output-limit-type"].value
   local output_limit = settings.get_player_settings(player.index)["paste-logistic-settings-continued-output-limit"].value
   local limit = helpers.get_limit(game, proto, output_limit_type, output_limit)
+  local existing_condition = behavior.logistic_condition
+
+  if existing_condition then
+    local existing_first_signal = existing_condition.first_signal
+    local existing_signal = existing_first_signal
+      and (existing_first_signal.signal or existing_first_signal)
+    if existing_signal
+      and existing_signal.name == data.name
+      and existing_condition.comparator == "<"
+    then
+      limit = limit + (existing_condition.constant or 0)
+    end
+  end
 
   behavior.connect_to_logistic_network = true
   behavior.logistic_condition = {
@@ -68,13 +84,22 @@ function lib.get_or_create_section(game, player, entity, data)
   -- Get the LuaLogisticPoint for the given LuaEntity.
   local point = entity.get_logistic_point(0)
   if not point then return end
+  local ingredients = item_ingredients_only(data and data.ingredients)
 
   -- If there are existing sections...
   if point.sections_count > 0 then
-    -- Is there an empty, unnamed section? Return that.
-    for _, sec in ipairs(point.sections) do
+    -- Reuse the starter blank section only when it is the only section.
+    if point.sections_count == 1 then
+      local sec = point.sections[1]
       if sec.filters_count == 0 and sec.group == "" then
         return sec
+      end
+    else
+      for idx = point.sections_count, 1, -1 do
+        local sec = point.sections[idx]
+        if sec.filters_count == 0 and sec.group == "" then
+          point.remove_section(idx)
+        end
       end
     end
     -- If none are empty, does one section match exactly the kind of ingredients
@@ -83,7 +108,9 @@ function lib.get_or_create_section(game, player, entity, data)
     -- quantities; it's easier to just nuke the section and let the client code
     -- pave over it.
     for idx, sec in ipairs(point.sections) do
-      if lib.has_same_ingredient_names(game, player, sec.filters, data.ingredients) and sec.group == "" then
+      if sec.group == ""
+        and lib.has_same_ingredient_names(game, player, sec.filters, ingredients)
+      then
         point.remove_section(idx)
         break
       end
@@ -110,8 +137,9 @@ function lib.apply_chest_settings(game, player, entity, data)
     }
   elseif helpers.is_requester_chest(game, entity) then
     local section = lib.get_or_create_section(game, player, entity, data)
-    if data and data.ingredients then
-      for i, ing in ipairs(data.ingredients) do
+    local ingredients = item_ingredients_only(data and data.ingredients)
+    if section and ingredients then
+      for i, ing in ipairs(ingredients) do
         local proto = prototypes.item[ing.name]
         if proto then -- e.g. fluids don't have a useful prototype
           local request_size_type = settings.get_player_settings(player.index)["paste-logistic-settings-continued-request-size-type"].value
