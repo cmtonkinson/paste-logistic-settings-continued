@@ -1,5 +1,13 @@
 local lib = {}
-local helpers = require("__paste-logistic-settings-continued__.src.helpers")
+
+local function require_plsc_module(module_name)
+  if _G.script == nil then
+    return require("src." .. module_name)
+  end
+  return require("__paste-logistic-settings-continued__.src." .. module_name)
+end
+
+local helpers = require_plsc_module("helpers")
 
 -----------------------------------------------------------------------------
 -- Applies the settings to an inserter.

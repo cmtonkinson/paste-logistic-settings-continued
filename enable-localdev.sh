@@ -1,2 +1,10 @@
 #!/usr/bin/env zsh
-ln -s $(pwd) ~/Library/Application\ Support/factorio/mods/paste-logistic-settings-continued
+set -euo pipefail
+
+SCRIPT_DIR=${0:A:h}
+source "$SCRIPT_DIR/localdev-common.sh"
+
+mkdir -p "$MODS_DIR"
+rm -f "$MODS_DIR/$MOD_NAME"
+ln -s "$REPO_ROOT" "$MODS_DIR/$MOD_NAME"
+set_mod_enabled true
