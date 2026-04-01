@@ -26,38 +26,13 @@ function helpers.pluck_set(tbl, key)
   return set
 end
 
------------------------------------------------------------------------------
--- Given an entity which could be real or ghost, this returns a table with
--- standardized information about the entity.
--- @param game LuaGameScript: The game object.
--- @param entity LuaEntity: The entity to resolve.
--- @return table: A table containing the resolved entity information.
-function helpers.resolve_entity(game, entity)
-  if not entity or not entity.valid then return nil end
-
-  if entity.type == "entity-ghost" then
-    return {
-      is_ghost = true,
-      name = entity.ghost_name,
-      entity = entity,
-      prototype = entity.ghost_prototype,
-    }
-  else
-    return {
-      is_ghost = false,
-      name = entity.name,
-      entity = entity,
-      prototype = entity.prototype,
-    }
-  end
-end
-
------------------------------------------------------------------------------
 -- Determines whether the entity is a crafting machine.
 -- @param entity LuaEntity: The entity to test.
 -- @return boolean: True if the entity is a crafting machine, false otherwise.
 function helpers.is_crafting_machine(game, entity)
-  if not (entity and entity.valid) then return false end
+  if not (entity and entity.valid) then
+    return false
+  end
   return pcall(entity.get_recipe, entity)
 end
 
@@ -77,9 +52,9 @@ function helpers.is_valid_target(game, entity)
   return entity
     and entity.valid
     and (
-      -- It may seem weird to call is_valid_source here, but to enable the
+            -- It may seem weird to call is_valid_source here, but to enable the
       -- autoconfigure feature, any valid source IS a valid target.
-      helpers.is_valid_source(game, entity)
+helpers.is_valid_source(game, entity)
       -- And now the "normal" valid targets.
       or entity.type == "logistic-container"
       or (entity.type == "inserter" and entity.get_or_create_control_behavior)
@@ -92,10 +67,7 @@ end
 -- @param entity LuaEntity: The entity to test.
 -- @return boolean: True if the entity is a storage chest, false otherwise.
 function helpers.is_storage_chest(game, entity)
-  return entity
-    and entity.valid
-    and entity.type == "logistic-container"
-    and entity.prototype.logistic_mode == "storage"
+  return entity and entity.valid and entity.type == "logistic-container" and entity.prototype.logistic_mode == "storage"
 end
 
 -----------------------------------------------------------------------------
@@ -104,10 +76,9 @@ end
 -- @param entity LuaEntity: The entity to test.
 -- @return boolean: True if the entity is a requester chest, false otherwise.
 function helpers.is_requester_chest(game, entity)
-  if not entity
-    or not entity.valid
-    or entity.type ~= "logistic-container"
-  then return false end
+  if not entity or not entity.valid or entity.type ~= "logistic-container" then
+    return false
+  end
   local mode = entity.prototype.logistic_mode
   return mode == "requester" or mode == "buffer"
 end
@@ -135,8 +106,12 @@ end
 -- @param radius number: The radius of the area.
 -- @return table: The area table.
 function helpers.get_area(game, entity, distance)
-  if not (entity and entity.valid) then return nil end
-  if not distance or distance < 0 then distance = 0 end
+  if not (entity and entity.valid) then
+    return nil
+  end
+  if not distance or distance < 0 then
+    distance = 0
+  end
 
   return {
     {
@@ -177,7 +152,5 @@ function helpers.is_holding_anything(game, player, event)
     return true
   end
 end
-
-
 
 return helpers

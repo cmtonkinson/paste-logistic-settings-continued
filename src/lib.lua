@@ -20,26 +20,32 @@ end
 -- @return nil
 function lib.apply_inserter_settings(game, player, inserter, data)
   local behavior = inserter.get_or_create_control_behavior()
-  if not data then return end
-  if not behavior then return end
+  if not data then
+    return
+  end
+  if not behavior then
+    return
+  end
 
-  if not data.item then return end -- happens when the output is a fluid
+  if not data.item then
+    return
+  end -- happens when the output is a fluid
 
   local proto = prototypes.item[data.name]
-  if not proto then return end -- e.g. fluids don't have a useful prototype
-  local output_limit_type = settings.get_player_settings(player.index)["paste-logistic-settings-continued-output-limit-type"].value
-  local output_limit = settings.get_player_settings(player.index)["paste-logistic-settings-continued-output-limit"].value
+  if not proto then
+    return
+  end -- e.g. fluids don't have a useful prototype
+  local output_limit_type =
+    settings.get_player_settings(player.index)["paste-logistic-settings-continued-output-limit-type"].value
+  local output_limit =
+    settings.get_player_settings(player.index)["paste-logistic-settings-continued-output-limit"].value
   local limit = helpers.get_limit(game, proto, output_limit_type, output_limit)
   local existing_condition = behavior.logistic_condition
 
   if existing_condition then
     local existing_first_signal = existing_condition.first_signal
-    local existing_signal = existing_first_signal
-      and (existing_first_signal.signal or existing_first_signal)
-    if existing_signal
-      and existing_signal.name == data.name
-      and existing_condition.comparator == "<"
-    then
+    local existing_signal = existing_first_signal and (existing_first_signal.signal or existing_first_signal)
+    if existing_signal and existing_signal.name == data.name and existing_condition.comparator == "<" then
       limit = limit + (existing_condition.constant or 0)
     end
   end
@@ -60,13 +66,17 @@ end
 -- @param ingredients table: The ingredients to check against.
 -- @return boolean: True if the filters match the ingredients, false otherwise.
 function lib.has_same_ingredient_names(game, player, filters, ingredients)
-  if table_size(filters) ~= table_size(ingredients) then return false end
+  if table_size(filters) ~= table_size(ingredients) then
+    return false
+  end
 
   local ingredient_names = helpers.pluck_set(ingredients, "name")
   local filter_names = helpers.pluck_set(helpers.pluck(filters, "value"), "name")
 
   for ing, _ in pairs(ingredient_names) do
-    if ing ~= '' and not filter_names[ing] then return false end
+    if ing ~= "" and not filter_names[ing] then
+      return false
+    end
   end
 
   return true
@@ -83,7 +93,9 @@ end
 function lib.get_or_create_section(game, player, entity, data)
   -- Get the LuaLogisticPoint for the given LuaEntity.
   local point = entity.get_logistic_point(0)
-  if not point then return end
+  if not point then
+    return
+  end
   local ingredients = item_ingredients_only(data and data.ingredients)
 
   -- If there are existing sections...
@@ -108,9 +120,7 @@ function lib.get_or_create_section(game, player, entity, data)
     -- quantities; it's easier to just nuke the section and let the client code
     -- pave over it.
     for idx, sec in ipairs(point.sections) do
-      if sec.group == ""
-        and lib.has_same_ingredient_names(game, player, sec.filters, ingredients)
-      then
+      if sec.group == "" and lib.has_same_ingredient_names(game, player, sec.filters, ingredients) then
         point.remove_section(idx)
         break
       end
@@ -130,9 +140,11 @@ end
 function lib.apply_chest_settings(game, player, entity, data)
   local quality_string = helpers.get_quality_string(data.quality)
   if helpers.is_storage_chest(game, entity) then
-    if not data.item then return end -- happens when the output is a fluid
+    if not data.item then
+      return
+    end -- happens when the output is a fluid
     entity.storage_filter = {
-      name    = data.name,
+      name = data.name,
       quality = quality_string,
     }
   elseif helpers.is_requester_chest(game, entity) then
@@ -142,8 +154,10 @@ function lib.apply_chest_settings(game, player, entity, data)
       for i, ing in ipairs(ingredients) do
         local proto = prototypes.item[ing.name]
         if proto then -- e.g. fluids don't have a useful prototype
-          local request_size_type = settings.get_player_settings(player.index)["paste-logistic-settings-continued-request-size-type"].value
-          local request_size = settings.get_player_settings(player.index)["paste-logistic-settings-continued-request-size"].value
+          local request_size_type =
+            settings.get_player_settings(player.index)["paste-logistic-settings-continued-request-size-type"].value
+          local request_size =
+            settings.get_player_settings(player.index)["paste-logistic-settings-continued-request-size"].value
           local quota = helpers.get_limit(game, proto, request_size_type, request_size)
           section.set_slot(i, {
             value = {
@@ -167,7 +181,9 @@ end
 function lib.copy_settings(game, player, entity)
   local data = {}
   local recipe, quality = entity.get_recipe()
-  if not recipe then return nil end
+  if not recipe then
+    return nil
+  end
 
   data.source = entity
   quality = quality or 1
@@ -182,8 +198,8 @@ function lib.copy_settings(game, player, entity)
     end
   end
   if product and product.name then
-    data.item    = true
-    data.name    = product.name
+    data.item = true
+    data.name = product.name
     data.quality = quality.level
   end
 
@@ -194,10 +210,10 @@ function lib.copy_settings(game, player, entity)
     local proto = prototypes.item[ing.name]
     if proto then
       table.insert(item_ingredients, {
-        name       = ing.name,
-        amount     = ing.amount,
+        name = ing.name,
+        amount = ing.amount,
         stack_size = proto.stack_size,
-        quality    = data.quality
+        quality = data.quality,
       })
     end
   end
@@ -231,15 +247,16 @@ end
 -- @param target LuaEntity: The entity to copy from.
 -- @return nil
 function lib.autoconfigure_settings(game, player, target, data)
-
   -- Seemingly counter-intuitively, the target needs to be a valid source.
-  if not helpers.is_valid_source(game, target) then return end
+  if not helpers.is_valid_source(game, target) then
+    return
+  end
   -- Find nearby inserters.
-  local nearby_inserters = target.surface.find_entities_filtered{
+  local nearby_inserters = target.surface.find_entities_filtered({
     area = helpers.get_area(game, target, 4),
     type = "inserter",
     force = target.force,
-  }
+  })
 
   -- Loop through each inserter; only paste settings for inserters which are
   -- linked to both the target and a chest in the "right" direction.
@@ -256,6 +273,5 @@ function lib.autoconfigure_settings(game, player, target, data)
     end
   end
 end
-
 
 return lib
