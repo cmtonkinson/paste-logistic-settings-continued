@@ -1,36 +1,5 @@
 local lib = require("src.lib")
 
-local function with_mocked_player_settings(overrides, fn)
-  local real_settings = settings
-  local values = {
-    ["paste-logistic-settings-continued-output-limit-type"] = {
-      value = overrides.output_limit_type or "stacks",
-    },
-    ["paste-logistic-settings-continued-output-limit"] = {
-      value = overrides.output_limit or 1,
-    },
-    ["paste-logistic-settings-continued-request-size-type"] = {
-      value = overrides.request_size_type or "stacks",
-    },
-    ["paste-logistic-settings-continued-request-size"] = {
-      value = overrides.request_size or 1,
-    },
-  }
-
-  settings = {
-    get_player_settings = function(player_index)
-      assert(player_index == 1, "expected mocked player index 1")
-      return values
-    end,
-  }
-
-  local ok, err = pcall(fn, { index = 1 })
-  settings = real_settings
-  if not ok then
-    error(err, 0)
-  end
-end
-
 local function request_map(section)
   local requests = {}
   for _, filter in ipairs(section.filters) do
@@ -111,11 +80,11 @@ return {
       local cell = transport_belt_cell(context.game.surfaces[1])
       local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
 
-      with_mocked_player_settings({
-        output_limit_type = "items",
-        output_limit = 9,
-        request_size_type = "items",
-        request_size = 5,
+      f:with_player_settings(context.player, {
+        ["paste-logistic-settings-continued-output-limit-type"] = "items",
+        ["paste-logistic-settings-continued-output-limit"] = 9,
+        ["paste-logistic-settings-continued-request-size-type"] = "items",
+        ["paste-logistic-settings-continued-request-size"] = 5,
       }, function(player)
         lib.autoconfigure_settings(context.game, player, cell.machine, data)
       end)
