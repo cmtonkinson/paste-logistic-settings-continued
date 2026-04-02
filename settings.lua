@@ -19,9 +19,16 @@ data:extend({
     minimum_value = 1,
   },
   {
+    type = "bool-setting",
+    name = "paste-logistic-settings-continued-accumulate-inserter-output-limit",
+    order = "a[c]",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
+  {
     type = "string-setting",
     name = "paste-logistic-settings-continued-request-size-type",
-    order = "a[c]",
+    order = "a[d]",
     setting_type = "runtime-per-user",
     default_value = "stacks",
     allowed_values = {
@@ -32,7 +39,7 @@ data:extend({
   {
     type = "int-setting",
     name = "paste-logistic-settings-continued-request-size",
-    order = "a[d]",
+    order = "a[e]",
     setting_type = "runtime-per-user",
     default_value = 1,
     minimum_value = 1,

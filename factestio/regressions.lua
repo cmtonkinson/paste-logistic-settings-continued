@@ -205,4 +205,25 @@ return {
       f:expect(condition.constant, 200)
     end,
   },
+
+  repeated_inserter_paste_replaces_limit_when_accumulation_disabled = {
+    from = "setup",
+    test = function(f, context)
+      local cell = transport_belt_cell(context.game.surfaces[1])
+      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+
+      f:with_player_settings(context.player, {
+        ["paste-logistic-settings-continued-output-limit-type"] = "stacks",
+        ["paste-logistic-settings-continued-output-limit"] = 1,
+        ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = false,
+      }, function(player)
+        lib.paste_settings(context.game, player, cell.output_inserter, data)
+        lib.paste_settings(context.game, player, cell.output_inserter, data)
+      end)
+
+      local condition = cell.output_inserter.get_or_create_control_behavior().logistic_condition
+
+      f:expect(condition.constant, 100)
+    end,
+  },
 }

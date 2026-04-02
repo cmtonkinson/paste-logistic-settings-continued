@@ -43,6 +43,7 @@ function Support.with_mocked_factorio_globals()
   _G.settings = Support.make_settings({
     ["paste-logistic-settings-continued-output-limit-type"] = { value = "items" },
     ["paste-logistic-settings-continued-output-limit"] = { value = 13 },
+    ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = { value = true },
     ["paste-logistic-settings-continued-request-size-type"] = { value = "items" },
     ["paste-logistic-settings-continued-request-size"] = { value = 7 },
   })

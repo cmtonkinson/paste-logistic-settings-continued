@@ -57,6 +57,67 @@ describe("lib", function()
     assert.equal(22, behavior.logistic_condition.constant)
   end)
 
+  it("apply_inserter_settings replaces matching existing limits when accumulation is disabled", function()
+    _G.settings = Support.make_settings({
+      ["paste-logistic-settings-continued-output-limit-type"] = { value = "items" },
+      ["paste-logistic-settings-continued-output-limit"] = { value = 13 },
+      ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = { value = false },
+      ["paste-logistic-settings-continued-request-size-type"] = { value = "items" },
+      ["paste-logistic-settings-continued-request-size"] = { value = 7 },
+    })
+
+    local behavior = {
+      logistic_condition = {
+        comparator = "<",
+        first_signal = { name = "transport-belt" },
+        constant = 9,
+      },
+    }
+    local inserter = {
+      get_or_create_control_behavior = function()
+        return behavior
+      end,
+    }
+
+    lib.apply_inserter_settings(nil, { index = 1 }, inserter, {
+      item = true,
+      name = "transport-belt",
+      quality = 1,
+    })
+
+    assert.equal(13, behavior.logistic_condition.constant)
+  end)
+
+  it("apply_inserter_settings defaults missing accumulation setting to enabled", function()
+    _G.settings = Support.make_settings({
+      ["paste-logistic-settings-continued-output-limit-type"] = { value = "items" },
+      ["paste-logistic-settings-continued-output-limit"] = { value = 13 },
+      ["paste-logistic-settings-continued-request-size-type"] = { value = "items" },
+      ["paste-logistic-settings-continued-request-size"] = { value = 7 },
+    })
+
+    local behavior = {
+      logistic_condition = {
+        comparator = "<",
+        first_signal = { name = "transport-belt" },
+        constant = 9,
+      },
+    }
+    local inserter = {
+      get_or_create_control_behavior = function()
+        return behavior
+      end,
+    }
+
+    lib.apply_inserter_settings(nil, { index = 1 }, inserter, {
+      item = true,
+      name = "transport-belt",
+      quality = 1,
+    })
+
+    assert.equal(22, behavior.logistic_condition.constant)
+  end)
+
   it("apply_inserter_settings does not accumulate non-matching conditions", function()
     local behavior = {
       logistic_condition = {

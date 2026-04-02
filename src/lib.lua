@@ -39,10 +39,16 @@ function lib.apply_inserter_settings(game, player, inserter, data)
     settings.get_player_settings(player.index)["paste-logistic-settings-continued-output-limit-type"].value
   local output_limit =
     settings.get_player_settings(player.index)["paste-logistic-settings-continued-output-limit"].value
+  local accumulate_setting =
+    settings.get_player_settings(player.index)["paste-logistic-settings-continued-accumulate-inserter-output-limit"]
+  local accumulate_output_limit = true
+  if accumulate_setting and accumulate_setting.value ~= nil then
+    accumulate_output_limit = accumulate_setting.value
+  end
   local limit = helpers.get_limit(game, proto, output_limit_type, output_limit)
   local existing_condition = behavior.logistic_condition
 
-  if existing_condition then
+  if accumulate_output_limit and existing_condition then
     local existing_first_signal = existing_condition.first_signal
     local existing_signal = existing_first_signal and (existing_first_signal.signal or existing_first_signal)
     if existing_signal and existing_signal.name == data.name and existing_condition.comparator == "<" then

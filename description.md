@@ -14,6 +14,10 @@ Pasting to an inserter will:
 1. Enable the logistics network connection
 2. Set the inserter to "enabled" when the network contains less than one stack of the item
 
+By default, pasting the same recipe into the same inserter again will add the
+new output limit to the existing one. This can be disabled in the runtime mod
+settings.
+
 ![](https://gitlab.com/cmtonkinson/paste-logistic-settings-continued/-/raw/main/images/outserter.png?ref_type=heads)
 
 #### Storage Chests
