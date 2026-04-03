@@ -1,5 +1,6 @@
 local helpers = require("__paste-logistic-settings-continued__.src.helpers")
 local lib = require("__paste-logistic-settings-continued__.src.lib")
+local EntityView = require("__paste-logistic-settings-continued__.src.entity_view")
 
 -- Prefix all events to avoid conflicts.
 local EVENT_NAMESPACE = "paste-logistic-settings-continued"
@@ -9,10 +10,11 @@ local EVENT_NAMESPACE = "paste-logistic-settings-continued"
 script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
   local player = game.players[event.player_index]
   local target = player.selected
+  local target_view = EntityView.resolve(target)
   if helpers.is_holding_anything(game, player, event) then
     return
   end
-  if not helpers.is_valid_source(game, target) then
+  if not target_view:is_valid_source() then
     return
   end
 
@@ -27,6 +29,7 @@ end)
 script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   local player = game.players[event.player_index]
   local target = player.selected
+  local target_view = EntityView.resolve(target)
   if not target or not target.valid then
     return
   end
@@ -36,7 +39,7 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   if not target or not target.valid then
     return
   end
-  if not helpers.is_valid_target(game, target) then
+  if not target_view:is_valid_target() then
     return
   end
 
@@ -51,7 +54,7 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   -- *More specficially, are we pasting onto an entity /with the same name
   -- as the/ source entity? This allows us to copy from one CraftingMachine
   -- and autoconfigure to many others.
-  if target.name == data.source.name then
+  if target_view:same_effective_name(data.source) then
     lib.autoconfigure_settings(game, player, target, data)
   -- Nope, just pasting to an inserter or chest.
   else

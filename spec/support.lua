@@ -70,6 +70,7 @@ function Support.make_control_harness()
   local original_settings = rawget(_G, "settings")
   local original_helpers_preload = package.preload["__paste-logistic-settings-continued__.src.helpers"]
   local original_lib_preload = package.preload["__paste-logistic-settings-continued__.src.lib"]
+  local original_entity_view_preload = package.preload["__paste-logistic-settings-continued__.src.entity_view"]
 
   local harness = {
     handlers = {},
@@ -80,11 +81,23 @@ function Support.make_control_harness()
     is_holding_anything = function()
       return false
     end,
-    is_valid_source = function(_, target)
-      return target ~= nil
-    end,
-    is_valid_target = function(_, target)
-      return target and target.valid
+  }
+
+  harness.entity_view_stub = {
+    resolve = function(target)
+      return {
+        is_valid_source = function()
+          return target ~= nil
+        end,
+        is_valid_target = function()
+          return target and target.valid
+        end,
+        same_effective_name = function(_, other)
+          local target_name = target and (target.ghost_name or target.name)
+          local other_name = other and (other.ghost_name or other.source_name or other.name)
+          return target_name ~= nil and target_name == other_name
+        end,
+      }
     end,
   }
 
@@ -108,6 +121,9 @@ function Support.make_control_harness()
   package.preload["__paste-logistic-settings-continued__.src.lib"] = function()
     return harness.lib_stub
   end
+  package.preload["__paste-logistic-settings-continued__.src.entity_view"] = function()
+    return harness.entity_view_stub
+  end
 
   _G.script = {
     on_event = function(name, fn)
@@ -121,6 +137,7 @@ function Support.make_control_harness()
   function harness.load_control()
     package.loaded["__paste-logistic-settings-continued__.src.helpers"] = nil
     package.loaded["__paste-logistic-settings-continued__.src.lib"] = nil
+    package.loaded["__paste-logistic-settings-continued__.src.entity_view"] = nil
     assert(loadfile("/Users/chris/repo/paste-logistic-settings-continued/control.lua", "t"))()
   end
 
@@ -131,8 +148,10 @@ function Support.make_control_harness()
     _G.settings = original_settings
     package.preload["__paste-logistic-settings-continued__.src.helpers"] = original_helpers_preload
     package.preload["__paste-logistic-settings-continued__.src.lib"] = original_lib_preload
+    package.preload["__paste-logistic-settings-continued__.src.entity_view"] = original_entity_view_preload
     package.loaded["__paste-logistic-settings-continued__.src.helpers"] = nil
     package.loaded["__paste-logistic-settings-continued__.src.lib"] = nil
+    package.loaded["__paste-logistic-settings-continued__.src.entity_view"] = nil
   end
 
   return harness

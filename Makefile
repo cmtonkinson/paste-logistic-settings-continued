@@ -1,4 +1,4 @@
-.PHONY: clean deps format lint test verify
+.PHONY: clean deps format lint test factestio verify
 
 ROCKSPEC := $(lastword $(sort $(wildcard *.rockspec)))
 
@@ -21,4 +21,10 @@ lint:
 test:
 	busted -o gtest
 
+factestio:
+	factestio
+
 verify: format lint test
+ifndef CI
+	$(MAKE) factestio
+endif

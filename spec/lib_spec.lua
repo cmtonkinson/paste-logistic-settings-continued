@@ -354,8 +354,16 @@ describe("lib", function()
     local calls = {}
     local original_apply_chest_settings = lib.apply_chest_settings
     local original_apply_inserter_settings = lib.apply_inserter_settings
-    local chest_target = { type = "logistic-container" }
-    local inserter_target = { type = "inserter" }
+    local chest_target = {
+      valid = true,
+      type = "entity-ghost",
+      ghost_type = "logistic-container",
+    }
+    local inserter_target = {
+      valid = true,
+      type = "entity-ghost",
+      ghost_type = "inserter",
+    }
 
     lib.apply_chest_settings = function(_, _, target)
       table.insert(calls, { kind = "chest", target = target })
@@ -400,10 +408,12 @@ describe("lib", function()
       surface = {},
     }
     local input_inserter = {
+      type = "inserter",
       pickup_target = requester,
       drop_target = target,
     }
     local output_inserter = {
+      type = "inserter",
       pickup_target = target,
       drop_target = storage,
     }
@@ -424,6 +434,46 @@ describe("lib", function()
     lib.paste_settings = original_paste_settings
 
     assert.same({ requester, output_inserter, storage }, calls)
+  end)
+
+  it("autoconfigure_settings includes ghost inserters and ghost storage targets", function()
+    local calls = {}
+    local original_paste_settings = lib.paste_settings
+    local target = {
+      valid = true,
+      force = "player",
+      position = { x = 0, y = 0 },
+      get_recipe = function()
+        return { name = "transport-belt" }
+      end,
+      surface = {},
+    }
+    local ghost_storage = {
+      valid = true,
+      type = "entity-ghost",
+      ghost_type = "logistic-container",
+      ghost_prototype = { logistic_mode = "storage" },
+    }
+    local ghost_output_inserter = {
+      valid = true,
+      type = "entity-ghost",
+      ghost_type = "inserter",
+      pickup_target = target,
+      drop_target = ghost_storage,
+    }
+    target.surface.find_entities_filtered = function()
+      return { ghost_output_inserter }
+    end
+
+    lib.paste_settings = function(_, _, entity)
+      table.insert(calls, entity)
+    end
+
+    lib.autoconfigure_settings(nil, { index = 1 }, target, { item = true, name = "transport-belt" })
+
+    lib.paste_settings = original_paste_settings
+
+    assert.same({ ghost_output_inserter, ghost_storage }, calls)
   end)
 
   it("copy_settings returns nil without a recipe and filters fluid ingredients", function()
@@ -451,10 +501,39 @@ describe("lib", function()
 
     local copied = lib.copy_settings(nil, nil, recipe_entity)
     assert.is_true(copied.item)
+    assert.is_nil(copied.source_name)
+    assert.is_nil(copied.source_type)
     assert.equal("transport-belt", copied.name)
     assert.equal(3, copied.quality)
     assert.same({
       { name = "iron-plate", amount = 1, stack_size = 100, quality = 3 },
     }, copied.ingredients)
+  end)
+
+  it("copy_settings stores effective source identity for ghost sources", function()
+    local ghost_entity = {
+      valid = true,
+      name = "entity-ghost",
+      type = "entity-ghost",
+      prototype = {},
+      ghost_name = "assembling-machine-2",
+      ghost_type = "assembling-machine",
+      ghost_prototype = {},
+      get_recipe = function()
+        return {
+          products = {
+            { name = "transport-belt" },
+          },
+          ingredients = {
+            { name = "iron-plate", amount = 1 },
+          },
+        }, { level = 1 }
+      end,
+    }
+
+    local copied = lib.copy_settings(nil, nil, ghost_entity)
+
+    assert.equal("assembling-machine-2", copied.source_name)
+    assert.equal("assembling-machine", copied.source_type)
   end)
 end)

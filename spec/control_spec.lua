@@ -61,7 +61,7 @@ describe("control", function()
 
   it("paste handler dispatches between autoconfigure and direct paste", function()
     local source = { name = "assembling-machine-2" }
-    local same_target = { valid = true, name = "assembling-machine-2" }
+    local same_target = { valid = true, type = "entity-ghost", ghost_name = "assembling-machine-2" }
     local other_target = { valid = true, name = "storage-chest" }
     _G.game = {
       players = {
@@ -117,8 +117,15 @@ describe("control", function()
         [1] = { source = { name = "assembling-machine-2" } },
       },
     }
-    harness.helpers_stub.is_valid_target = function()
-      return false
+    harness.entity_view_stub.resolve = function()
+      return {
+        is_valid_target = function()
+          return false
+        end,
+        same_effective_name = function()
+          return false
+        end,
+      }
     end
 
     harness.load_control()

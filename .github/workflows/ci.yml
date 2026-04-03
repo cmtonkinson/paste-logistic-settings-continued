@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.2 liblua5.2-dev luarocks
+
+      - name: Install Lua dependencies
+        run: |
+          luarocks install --only-deps dev-0.0-1.rockspec
+          luarocks install busted
+          luarocks install luacheck
+
+      - name: Install stylua
+        run: cargo install stylua
+
+      - name: Check formatting
+        run: stylua --check .
+
+      - name: Lint
+        run: luacheck .
+
+      - name: Run unit tests
+        run: busted -o gtest
