@@ -3,7 +3,7 @@ local EntityView = {}
 local ViewMethods = {}
 
 local function with_view(entity_or_view)
-  if entity_or_view and entity_or_view.entity and getmetatable(entity_or_view) == EntityView.metatable then
+  if type(entity_or_view) == "table" and getmetatable(entity_or_view) == EntityView.metatable then
     return entity_or_view
   end
   return EntityView.resolve(entity_or_view)

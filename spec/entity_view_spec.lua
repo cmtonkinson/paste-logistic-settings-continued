@@ -71,6 +71,23 @@ describe("entity_view", function()
     assert.is_true(EntityView.same_effective_name(built, ghost))
   end)
 
+  it("compares raw entities without treating them like resolved views", function()
+    local source = {
+      valid = true,
+      name = "assembling-machine-3",
+      type = "assembling-machine",
+      prototype = {},
+    }
+    local target = {
+      valid = true,
+      name = "assembling-machine-3",
+      type = "assembling-machine",
+      prototype = {},
+    }
+
+    assert.is_true(EntityView.resolve(target):same_effective_name(source))
+  end)
+
   it("treats ghost crafting machines as valid sources when get_recipe works", function()
     local ghost = {
       valid = true,
