@@ -20,13 +20,13 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.2 liblua5.2-dev luarocks
+          sudo apt-get install -y lua5.2 liblua5.2-dev luarocks cargo
 
       - name: Install Lua dependencies
         run: |
-          luarocks install --only-deps dev-0.0-1.rockspec
-          luarocks install busted
-          luarocks install luacheck
+          sudo luarocks install --only-deps dev-0.0-1.rockspec
+          sudo luarocks install busted
+          sudo luarocks install luacheck
 
       - name: Install stylua
         run: cargo install stylua
