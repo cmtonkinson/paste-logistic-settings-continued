@@ -30,6 +30,7 @@ function Support.with_mocked_factorio_globals()
   local original_prototypes = rawget(_G, "prototypes")
   local original_settings = rawget(_G, "settings")
   local original_table_size = rawget(_G, "table_size")
+  local original_defines = rawget(_G, "defines")
 
   _G.prototypes = {
     item = {
@@ -46,6 +47,11 @@ function Support.with_mocked_factorio_globals()
     ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = { value = true },
     ["paste-logistic-settings-continued-request-size-type"] = { value = "items" },
     ["paste-logistic-settings-continued-request-size"] = { value = 7 },
+    ["paste-logistic-settings-continued-enable-ghost-placement"] = { value = false },
+    ["paste-logistic-settings-continued-ghost-direction"] = { value = "south" },
+    ["paste-logistic-settings-continued-ghost-input-inserter"] = { value = "bulk-inserter" },
+    ["paste-logistic-settings-continued-ghost-output-inserter"] = { value = "fast-inserter" },
+    ["paste-logistic-settings-continued-ghost-output-chest"] = { value = "storage-chest" },
   })
 
   _G.table_size = function(tbl)
@@ -56,10 +62,23 @@ function Support.with_mocked_factorio_globals()
     return count
   end
 
+  _G.defines = {
+    direction = {
+      north = 0,
+      east = 2,
+      south = 4,
+      west = 6,
+    },
+    logistic_member_index = {
+      logistic_container = 1,
+    },
+  }
+
   return function()
     _G.prototypes = original_prototypes
     _G.settings = original_settings
     _G.table_size = original_table_size
+    _G.defines = original_defines
   end
 end
 

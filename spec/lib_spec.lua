@@ -159,6 +159,194 @@ describe("lib", function()
     assert.is_nil(behavior.logistic_condition)
   end)
 
+  it("get_ghost_placement_layout places adjacent inserters on the configured face", function()
+    local machine = {
+      valid = true,
+      position = { x = 10.5, y = 20.5 },
+      prototype = { tile_width = 3, tile_height = 3 },
+    }
+
+    local layout = lib.get_ghost_placement_layout(machine, {
+      face = "south",
+      input_inserter = "bulk-inserter",
+      output_inserter = "fast-inserter",
+      output_chest = "storage-chest",
+    })
+
+    assert.same({
+      role = "input_chest",
+      name = "requester-chest",
+      position = { x = 9.5, y = 23.5 },
+    }, layout[1])
+    assert.same({
+      role = "input_inserter",
+      name = "bulk-inserter",
+      position = { x = 9.5, y = 22.5 },
+      direction = defines.direction.south,
+    }, layout[2])
+    assert.same({
+      role = "output_inserter",
+      name = "fast-inserter",
+      position = { x = 10.5, y = 22.5 },
+      direction = defines.direction.north,
+    }, layout[3])
+    assert.same({
+      role = "output_chest",
+      name = "storage-chest",
+      position = { x = 10.5, y = 23.5 },
+    }, layout[4])
+  end)
+
+  it("ensure_ghost_layout fills only missing slots and configures compatible entities", function()
+    local calls = {}
+    local created = {}
+    local original_paste_settings = lib.paste_settings
+    local requester = {
+      valid = true,
+      type = "logistic-container",
+      prototype = { logistic_mode = "requester" },
+    }
+    local surface = {
+      find_entities_filtered = function(params)
+        if params.position.x == 9.5 and params.position.y == 23.5 then
+          return { requester }
+        end
+        return {}
+      end,
+      create_entity = function(params)
+        local entity = {
+          valid = true,
+          name = "entity-ghost",
+          type = "entity-ghost",
+          ghost_name = params.inner_name,
+          ghost_type = params.inner_name:find("inserter") and "inserter" or "logistic-container",
+          ghost_prototype = params.inner_name == "storage-chest" and { logistic_mode = "storage" }
+            or params.inner_name == "requester-chest" and { logistic_mode = "requester" }
+            or {},
+          direction = params.direction,
+          position = params.position,
+        }
+        table.insert(created, params)
+        return entity
+      end,
+    }
+    local machine = {
+      valid = true,
+      position = { x = 10.5, y = 20.5 },
+      force = "player",
+      prototype = { tile_width = 3, tile_height = 3 },
+      surface = surface,
+    }
+    local player = { index = 1 }
+    _G.settings = Support.make_settings({
+      ["paste-logistic-settings-continued-output-limit-type"] = { value = "items" },
+      ["paste-logistic-settings-continued-output-limit"] = { value = 13 },
+      ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = { value = true },
+      ["paste-logistic-settings-continued-request-size-type"] = { value = "items" },
+      ["paste-logistic-settings-continued-request-size"] = { value = 7 },
+      ["paste-logistic-settings-continued-enable-ghost-placement"] = { value = true },
+      ["paste-logistic-settings-continued-ghost-direction"] = { value = "south" },
+      ["paste-logistic-settings-continued-ghost-input-inserter"] = { value = "bulk-inserter" },
+      ["paste-logistic-settings-continued-ghost-output-inserter"] = { value = "fast-inserter" },
+      ["paste-logistic-settings-continued-ghost-output-chest"] = { value = "storage-chest" },
+    })
+
+    lib.paste_settings = function(_, _, entity)
+      table.insert(calls, entity)
+    end
+
+    local processed = lib.ensure_ghost_layout(nil, player, machine, { item = true, name = "transport-belt" })
+
+    lib.paste_settings = original_paste_settings
+
+    assert.equal(3, #created)
+    assert.equal("bulk-inserter", created[1].inner_name)
+    assert.equal("fast-inserter", created[2].inner_name)
+    assert.equal("storage-chest", created[3].inner_name)
+    assert.same({
+      requester,
+      {
+        valid = true,
+        name = "entity-ghost",
+        type = "entity-ghost",
+        ghost_name = "fast-inserter",
+        ghost_type = "inserter",
+        ghost_prototype = {},
+        direction = defines.direction.north,
+        position = { x = 10.5, y = 22.5 },
+      },
+      {
+        valid = true,
+        name = "entity-ghost",
+        type = "entity-ghost",
+        ghost_name = "storage-chest",
+        ghost_type = "logistic-container",
+        ghost_prototype = { logistic_mode = "storage" },
+        position = { x = 10.5, y = 23.5 },
+      },
+    }, calls)
+    assert.is_nil(processed[requester])
+  end)
+
+  it("ensure_ghost_layout does not reconfigure a placed requester ghost through paste_settings", function()
+    local calls = {}
+    local original_paste_settings = lib.paste_settings
+    local surface = {
+      find_entities_filtered = function()
+        return {}
+      end,
+      create_entity = function(params)
+        if params.name == "item-on-ground" then
+          return {
+            valid = false,
+          }
+        end
+        return {
+          valid = true,
+          name = "entity-ghost",
+          type = "entity-ghost",
+          ghost_name = params.inner_name,
+          ghost_type = params.inner_name:find("inserter") and "inserter" or "logistic-container",
+          ghost_prototype = params.inner_name == "storage-chest" and { logistic_mode = "storage" }
+            or params.inner_name == "requester-chest" and { logistic_mode = "requester" }
+            or {},
+          direction = params.direction,
+          position = params.position,
+        }
+      end,
+    }
+    local machine = {
+      valid = true,
+      position = { x = 10.5, y = 20.5 },
+      force = "player",
+      prototype = { tile_width = 3, tile_height = 3 },
+      surface = surface,
+    }
+    local player = { index = 1 }
+    _G.settings = Support.make_settings({
+      ["paste-logistic-settings-continued-output-limit-type"] = { value = "items" },
+      ["paste-logistic-settings-continued-output-limit"] = { value = 13 },
+      ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = { value = true },
+      ["paste-logistic-settings-continued-request-size-type"] = { value = "items" },
+      ["paste-logistic-settings-continued-request-size"] = { value = 7 },
+      ["paste-logistic-settings-continued-enable-ghost-placement"] = { value = true },
+      ["paste-logistic-settings-continued-ghost-direction"] = { value = "south" },
+      ["paste-logistic-settings-continued-ghost-input-inserter"] = { value = "bulk-inserter" },
+      ["paste-logistic-settings-continued-ghost-output-inserter"] = { value = "fast-inserter" },
+      ["paste-logistic-settings-continued-ghost-output-chest"] = { value = "storage-chest" },
+    })
+
+    lib.paste_settings = function(_, _, entity)
+      table.insert(calls, entity)
+    end
+
+    lib.ensure_ghost_layout(nil, player, machine, { item = true, name = "transport-belt" })
+
+    lib.paste_settings = original_paste_settings
+
+    assert.equal("fast-inserter", calls[1].ghost_name)
+  end)
+
   it("has_same_ingredient_names ignores order but rejects mismatches", function()
     local filters = {
       { value = { name = "iron-gear-wheel" } },
@@ -200,6 +388,34 @@ describe("lib", function()
     }
 
     assert.is_nil(lib.get_or_create_section(nil, nil, entity, { ingredients = { { name = "iron-plate" } } }))
+  end)
+
+  it("get_or_create_section falls back to sections owners after nil candidates", function()
+    local added = Support.make_section("", {})
+    local requester_sections = {
+      sections_count = 0,
+      sections = {},
+      add_section = function()
+        return added
+      end,
+    }
+    local entity = {
+      get_logistic_sections = function()
+        return nil
+      end,
+      get_requester_point = function()
+        return {
+          sections = requester_sections,
+        }
+      end,
+      get_logistic_point = function()
+        return nil
+      end,
+    }
+
+    local section = lib.get_or_create_section(nil, nil, entity, { ingredients = { { name = "iron-plate" } } })
+
+    assert.equal(added, section)
   end)
 
   it("get_or_create_section replaces matching unnamed sections", function()
@@ -357,12 +573,16 @@ describe("lib", function()
     local chest_target = {
       valid = true,
       type = "entity-ghost",
+      ghost_name = "requester-chest",
       ghost_type = "logistic-container",
+      ghost_prototype = { logistic_mode = "requester" },
     }
     local inserter_target = {
       valid = true,
       type = "entity-ghost",
+      ghost_name = "fast-inserter",
       ghost_type = "inserter",
+      ghost_prototype = {},
     }
 
     lib.apply_chest_settings = function(_, _, target)

@@ -60,6 +60,42 @@ local function fail_result(reason, detail)
   return { ok = false, reason = reason, detail = detail }
 end
 
+local function collect_sections(sections_owner)
+  local sections = sections_owner and sections_owner.sections or {}
+  local collected = {}
+  local sections_count = sections_owner and sections_owner.sections_count or nil
+
+  if sections_count ~= nil then
+    for index = 1, sections_count do
+      local section = sections[index]
+      if section == nil then
+        break
+      end
+      collected[#collected + 1] = section
+    end
+    return collected
+  end
+
+  local index = 1
+  while sections[index] ~= nil do
+    collected[#collected + 1] = sections[index]
+    index = index + 1
+  end
+
+  return collected
+end
+
+local function compact_array(...)
+  local compacted = {}
+  for index = 1, select("#", ...) do
+    local value = select(index, ...)
+    if value ~= nil then
+      compacted[#compacted + 1] = value
+    end
+  end
+  return compacted
+end
+
 EntityView.metatable = { __index = ViewMethods }
 
 function EntityView.resolve(entity)
@@ -237,6 +273,30 @@ function ViewMethods:get_requester_point()
   return point, nil
 end
 
+function ViewMethods:get_logistic_sections(index)
+  if not self.valid or not self.entity or not self.entity.get_logistic_sections then
+    return nil, "missing-get-logistic-sections"
+  end
+
+  local ok, sections
+  if index ~= nil then
+    ok, sections = pcall(self.entity.get_logistic_sections, self.entity, index)
+  elseif self.is_ghost then
+    ok, sections = pcall(self.entity.get_logistic_sections, self.entity, 0)
+    if ok and sections then
+      return sections, nil
+    end
+    ok, sections = pcall(self.entity.get_logistic_sections, self.entity)
+  else
+    ok, sections = pcall(self.entity.get_logistic_sections, self.entity)
+  end
+  if not ok then
+    return nil, "get-logistic-sections-failed"
+  end
+
+  return sections, nil
+end
+
 function ViewMethods:get_or_create_control_behavior()
   if not self.valid or not self.entity or not self.entity.get_or_create_control_behavior then
     return nil, "missing-get-or-create-control-behavior"
@@ -281,21 +341,72 @@ function ViewMethods:get_drop_target()
 end
 
 function ViewMethods:get_or_create_request_section(data)
-  local sections_owner, reason = self:get_requester_point()
+  local sections_owner
+  local requester_point, requester_reason = self:get_requester_point()
+  local logistic_sections_zero, logistic_sections_zero_reason = self:get_logistic_sections(0)
+  local logistic_sections, logistic_sections_reason = self:get_logistic_sections()
+  local logistic_point_zero, logistic_zero_reason = self:get_logistic_point(0)
+  local logistic_point, logistic_reason = self:get_logistic_point()
+  local candidates
+  if self.is_ghost then
+    candidates = compact_array(
+      logistic_point_zero,
+      logistic_point_zero and logistic_point_zero.sections or nil,
+      logistic_sections_zero,
+      logistic_sections,
+      requester_point,
+      requester_point and requester_point.sections or nil,
+      logistic_point,
+      logistic_point and logistic_point.sections or nil
+    )
+  else
+    candidates = compact_array(
+      logistic_sections_zero,
+      logistic_sections,
+      requester_point,
+      requester_point and requester_point.sections or nil,
+      logistic_point_zero,
+      logistic_point_zero and logistic_point_zero.sections or nil,
+      logistic_point,
+      logistic_point and logistic_point.sections or nil
+    )
+  end
+
+  for _, candidate in ipairs(candidates) do
+    if candidate and candidate.add_section ~= nil then
+      sections_owner = candidate
+      break
+    end
+  end
+
   if not sections_owner then
-    sections_owner, reason = self:get_logistic_point()
+    sections_owner = self.is_ghost
+        and (logistic_point_zero or logistic_sections_zero or logistic_sections or requester_point or logistic_point)
+      or (logistic_sections_zero or logistic_sections or requester_point or logistic_point_zero or logistic_point)
   end
   if not sections_owner then
-    return nil, reason
+    return nil,
+      logistic_sections_zero_reason
+        or logistic_sections_reason
+        or requester_reason
+        or logistic_zero_reason
+        or logistic_reason
   end
 
   local ingredients = item_ingredients_only(data and data.ingredients)
-  local sections = sections_owner.sections or {}
-  local sections_count = sections_owner.sections_count
-  if sections_count == nil then
-    sections_count = 0
-    for _ in ipairs(sections) do
-      sections_count = sections_count + 1
+  local sections = collect_sections(sections_owner)
+  local sections_count = #sections
+
+  if self.is_ghost and sections_count == 1 then
+    local section = sections[1]
+    if
+      section.filters_count == 0
+      and section.group == ""
+      and sections_owner.remove_section ~= nil
+      and sections_owner.add_section ~= nil
+    then
+      sections_owner.remove_section(1)
+      return sections_owner.add_section(), nil
     end
   end
 
@@ -312,7 +423,7 @@ function ViewMethods:get_or_create_request_section(data)
           sections_owner.remove_section(idx)
         end
       end
-      sections = sections_owner.sections or sections
+      sections = collect_sections(sections_owner)
     end
 
     for idx, section in ipairs(sections) do
@@ -321,6 +432,10 @@ function ViewMethods:get_or_create_request_section(data)
         break
       end
     end
+  end
+
+  if sections_owner.add_section == nil then
+    return nil, "missing-add-section"
   end
 
   return sections_owner.add_section(), nil
@@ -351,6 +466,7 @@ function ViewMethods:apply_requester_settings(game, player, data)
   end
 
   local ingredients = item_ingredients_only(data and data.ingredients)
+  local filters = {}
   for index, ingredient in ipairs(ingredients) do
     local prototype = prototypes.item[ingredient.name]
     if prototype then
@@ -360,19 +476,35 @@ function ViewMethods:apply_requester_settings(game, player, data)
         player_settings["paste-logistic-settings-continued-request-size-type"].value,
         player_settings["paste-logistic-settings-continued-request-size"].value
       )
-      local ok, err = pcall(function()
-        section.set_slot(index, {
-          value = {
-            name = ingredient.name,
-            quality = get_quality_string(data.quality),
-          },
-          mode = "at-least",
-          min = quota,
-        })
-      end)
-      if not ok then
-        return fail_result("set-request-slot-failed", err)
-      end
+      filters[#filters + 1] = {
+        index = index,
+        value = {
+          type = "item",
+          name = ingredient.name,
+          quality = get_quality_string(data.quality),
+        },
+        mode = "at-least",
+        min = quota,
+      }
+    end
+  end
+
+  if self.is_ghost then
+    local ok, err = pcall(function()
+      section.filters = filters
+    end)
+    if not ok then
+      return fail_result("set-request-filters-failed", err)
+    end
+    return ok_result()
+  end
+
+  for index, filter in ipairs(filters) do
+    local ok, err = pcall(function()
+      section.set_slot(index, filter)
+    end)
+    if not ok then
+      return fail_result("set-request-slot-failed", err)
     end
   end
 

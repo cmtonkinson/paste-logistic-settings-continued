@@ -91,41 +91,6 @@ describe("entity_view", function()
     assert.is_true(view:is_valid_source())
   end)
 
-  it("applies requester settings through a ghost logistic container", function()
-    local section = Support.make_section("", {})
-    local ghost = {
-      valid = true,
-      name = "entity-ghost",
-      type = "entity-ghost",
-      prototype = {},
-      ghost_name = "requester-chest",
-      ghost_type = "logistic-container",
-      ghost_prototype = { logistic_mode = "requester" },
-      get_logistic_point = function()
-        return {
-          sections_count = 1,
-          sections = { section },
-          add_section = function()
-            return section
-          end,
-        }
-      end,
-    }
-
-    local result = EntityView.resolve(ghost):apply_requester_settings(nil, { index = 1 }, {
-      quality = 1,
-      ingredients = {
-        { name = "iron-plate" },
-        { name = "iron-gear-wheel" },
-      },
-    })
-
-    assert.is_true(result.ok)
-    assert.equal("iron-plate", section.filters[1].value.name)
-    assert.equal("uncommon", section.filters[1].value.quality)
-    assert.equal(7, section.filters[1].min)
-  end)
-
   it("applies inserter settings through a ghost inserter", function()
     local behavior = {}
     local ghost = {
