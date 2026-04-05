@@ -1,6 +1,7 @@
 .PHONY: clean deps format lint test factestio verify
 
 ROCKSPEC := $(lastword $(sort $(wildcard *.rockspec)))
+FACTESTIO_TIMEOUT ?= 15
 
 clean:
 	rm -rf factestio/results/*
@@ -22,7 +23,7 @@ test:
 	busted -o gtest
 
 factestio:
-	factestio
+	factestio --timeout $(FACTESTIO_TIMEOUT)
 
 verify: format lint test
 ifndef CI

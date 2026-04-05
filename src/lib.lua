@@ -37,19 +37,22 @@ local function get_opposite_direction(direction)
   return opposites[direction]
 end
 
+local function normalize_inserter_name(name)
+  if name == "stack-inserter" then
+    return "bulk-inserter"
+  end
+  return name
+end
+
 local function get_ghost_placement_settings(player)
   return {
     enabled = get_player_setting_value(player, "paste-logistic-settings-continued-enable-ghost-placement", false),
     face = get_player_setting_value(player, "paste-logistic-settings-continued-ghost-direction", "south"),
-    input_inserter = get_player_setting_value(
-      player,
-      "paste-logistic-settings-continued-ghost-input-inserter",
-      "bulk-inserter"
+    input_inserter = normalize_inserter_name(
+      get_player_setting_value(player, "paste-logistic-settings-continued-ghost-input-inserter", "bulk-inserter")
     ),
-    output_inserter = get_player_setting_value(
-      player,
-      "paste-logistic-settings-continued-ghost-output-inserter",
-      "fast-inserter"
+    output_inserter = normalize_inserter_name(
+      get_player_setting_value(player, "paste-logistic-settings-continued-ghost-output-inserter", "fast-inserter")
     ),
     output_chest = get_player_setting_value(
       player,
