@@ -25,7 +25,25 @@ only checking them.
 `stylua` is not a LuaRocks package and must be installed separately with
 `brew install stylua`.
 
+Every `make` target invokes the toolchain by absolute path, so no target needs
+your shell configured. Running those tools *directly* is another matter, and
+`factestio` especially: it resolves `lua` from `PATH` itself and refuses to run
+against anything but 5.2. The `.envrc` puts `.hererocks/bin/` first on `PATH`
+whenever your shell is in this directory; run `direnv allow` once to enable it.
+Without [direnv], export it by hand:
+```sh
+export PATH="$PWD/.hererocks/bin:$PATH"
+```
+
+The `factestio` target drives a real Factorio install, so it needs more than the
+Lua toolchain: `brew install cmtonkinson/tap/factestio`, then a one-time
+`factestio activate` in this directory. Activation scaffolds the gitignored
+`factestio/config.lua`, symlinks the mod into Factorio's data directory, and
+rewrites `mod-list.json` to disable other mods; `factestio deactivate` restores
+the previous state. `factestio doctor` checks the environment.
+
 Delete `.hererocks/` to force a clean rebuild of the toolchain.
 
+[direnv]: https://direnv.net
 [hererocks]: https://github.com/luarocks/hererocks
 [uv]: https://docs.astral.sh/uv/
