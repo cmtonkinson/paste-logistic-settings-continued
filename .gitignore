@@ -1,3 +1,4 @@
 factestio*.zip
 old-releases/*.zip
 factestio_results/
+.hererocks/

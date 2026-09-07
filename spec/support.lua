@@ -157,7 +157,7 @@ function Support.make_control_harness()
     package.loaded["__paste-logistic-settings-continued__.src.helpers"] = nil
     package.loaded["__paste-logistic-settings-continued__.src.lib"] = nil
     package.loaded["__paste-logistic-settings-continued__.src.entity_view"] = nil
-    assert(loadfile("/Users/chris/repo/paste-logistic-settings-continued/control.lua", "t"))()
+    assert(loadfile("control.lua", "t"))()
   end
 
   function harness.restore()
