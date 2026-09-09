@@ -23,6 +23,69 @@ describe("helpers", function()
     assert.same({ [1] = true, [2] = true, [3] = true }, helpers.pluck_set(rows, "val"))
   end)
 
+  it("format_amount drops decimals that carry no information", function()
+    assert.equal("1", helpers.format_amount(1))
+    assert.equal("2", helpers.format_amount(2.0))
+    assert.equal("100", helpers.format_amount(100))
+    assert.equal("1.5", helpers.format_amount(1.5))
+    assert.equal("0.5", helpers.format_amount(0.5))
+    assert.equal("2.25", helpers.format_amount(2.25))
+    assert.equal("0.33", helpers.format_amount(1 / 3))
+  end)
+
+  it("build_output_limit_text joins the stack and item halves with a slash", function()
+    local prototype = { stack_size = 100, name = "transport-belt" }
+
+    assert.same({
+      "",
+      { "floating-text.paste-logistic-settings-continued-stacks", "1" },
+      " / ",
+      "100x [item=transport-belt]",
+    }, helpers.build_output_limit_text(prototype, 100, true, true))
+  end)
+
+  it("build_output_limit_text returns a single half on its own when only one is enabled", function()
+    local prototype = { stack_size = 100, name = "transport-belt" }
+
+    assert.same(
+      { "floating-text.paste-logistic-settings-continued-stacks", "2" },
+      helpers.build_output_limit_text(prototype, 200, true, false)
+    )
+    assert.same("200x [item=transport-belt]", helpers.build_output_limit_text(prototype, 200, false, true))
+  end)
+
+  it("build_output_limit_text expresses partial stacks as fractions", function()
+    local prototype = { stack_size = 100, name = "transport-belt" }
+    local text = helpers.build_output_limit_text(prototype, 150, true, false)
+
+    assert.same({ "floating-text.paste-logistic-settings-continued-stacks", "1.5" }, text)
+  end)
+
+  it("build_output_limit_text has nothing to say when both halves are disabled", function()
+    local prototype = { stack_size = 100, name = "transport-belt" }
+
+    assert.is_nil(helpers.build_output_limit_text(prototype, 100, false, false))
+  end)
+
+  it("build_output_limit_text declines to render a missing prototype or a useless limit", function()
+    local prototype = { stack_size = 100, name = "transport-belt" }
+
+    assert.is_nil(helpers.build_output_limit_text(nil, 100, true, true))
+    assert.is_nil(helpers.build_output_limit_text(prototype, 0, true, true))
+    assert.is_nil(helpers.build_output_limit_text(prototype, -5, true, true))
+    assert.is_nil(helpers.build_output_limit_text(prototype, nil, true, true))
+  end)
+
+  it("build_output_limit_text survives a prototype with an unusable stack size", function()
+    local prototype = { stack_size = 0, name = "oddity" }
+
+    -- Falling back to a stack size of 1 keeps this from dividing by zero.
+    assert.same(
+      { "floating-text.paste-logistic-settings-continued-stacks", "50" },
+      helpers.build_output_limit_text(prototype, 50, true, false)
+    )
+  end)
+
   it("get_area returns a bounding box around a valid entity", function()
     local entity = {
       valid = true,

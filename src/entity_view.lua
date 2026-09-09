@@ -556,7 +556,8 @@ function ViewMethods:apply_inserter_settings(game, player, data)
     return fail_result("set-logistic-condition-failed", err)
   end
 
-  return ok_result()
+  -- Callers surface this limit to the player; see lib.show_output_limit_text.
+  return { ok = true, limit = limit }
 end
 
 return EntityView

@@ -34,10 +34,10 @@ function Support.with_mocked_factorio_globals()
 
   _G.prototypes = {
     item = {
-      ["transport-belt"] = { stack_size = 100 },
-      ["iron-plate"] = { stack_size = 100 },
-      ["iron-gear-wheel"] = { stack_size = 100 },
-      sulfur = { stack_size = 50 },
+      ["transport-belt"] = { stack_size = 100, name = "transport-belt" },
+      ["iron-plate"] = { stack_size = 100, name = "iron-plate" },
+      ["iron-gear-wheel"] = { stack_size = 100, name = "iron-gear-wheel" },
+      sulfur = { stack_size = 50, name = "sulfur" },
     },
   }
 
@@ -45,6 +45,9 @@ function Support.with_mocked_factorio_globals()
     ["paste-logistic-settings-continued-output-limit-type"] = { value = "items" },
     ["paste-logistic-settings-continued-output-limit"] = { value = 13 },
     ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = { value = true },
+    ["paste-logistic-settings-continued-show-output-limit-text"] = { value = true },
+    ["paste-logistic-settings-continued-output-limit-text-stacks"] = { value = true },
+    ["paste-logistic-settings-continued-output-limit-text-items"] = { value = true },
     ["paste-logistic-settings-continued-request-size-type"] = { value = "items" },
     ["paste-logistic-settings-continued-request-size"] = { value = 7 },
     ["paste-logistic-settings-continued-enable-ghost-placement"] = { value = false },

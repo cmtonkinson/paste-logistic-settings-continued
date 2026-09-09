@@ -364,13 +364,85 @@ function lib.ensure_ghost_layout(game, player, target, data)
 end
 
 -----------------------------------------------------------------------------
+-- Picks the entity the output limit text should hover over. The limit governs
+-- what the inserter may put into the chest it feeds, so the chest is what the
+-- player cares about; fall back to the inserter when it feeds anything else.
+-- @param inserter_view EntityView: The inserter that was configured.
+-- @return LuaEntity|nil: The entity to anchor the text to.
+local function get_output_limit_text_anchor(inserter_view)
+  local drop_target = inserter_view:get_drop_target()
+  local drop_view = EntityView.resolve(drop_target)
+  if drop_view.valid and drop_view:is_logistic_container() then
+    return drop_target
+  end
+  return inserter_view.entity
+end
+
+-----------------------------------------------------------------------------
+-- Shows the applied output limit as floating text over the chest being fed.
+-- @param player LuaPlayer: The player who pasted.
+-- @param inserter_view EntityView: The inserter that was configured.
+-- @param data table: Information about the recipe being crafted.
+-- @param result table: The result returned by apply_inserter_settings.
+-- @return nil
+function lib.show_output_limit_text(player, inserter_view, data, result)
+  if not data or not result or not result.ok or not result.limit then
+    return
+  end
+  -- Ghosts get placed speculatively, often several at once; announcing a limit
+  -- for each would bury the player in text.
+  if inserter_view.is_ghost then
+    return
+  end
+  if not get_player_setting_value(player, "paste-logistic-settings-continued-show-output-limit-text", true) then
+    return
+  end
+  if type(player.create_local_flying_text) ~= "function" then
+    return
+  end
+
+  local prototype = prototypes.item[data.name]
+  if not prototype then
+    return
+  end
+
+  local text = helpers.build_output_limit_text(
+    prototype,
+    result.limit,
+    get_player_setting_value(player, "paste-logistic-settings-continued-output-limit-text-stacks", true),
+    get_player_setting_value(player, "paste-logistic-settings-continued-output-limit-text-items", true)
+  )
+  if not text then
+    return
+  end
+
+  local anchor = get_output_limit_text_anchor(inserter_view)
+  if not anchor or anchor.valid == false or not anchor.position then
+    return
+  end
+
+  -- Deliberately no speed or time_to_live: Factorio stretches both on its own
+  -- for text longer than 25 characters, which this usually is.
+  pcall(function()
+    player.create_local_flying_text({
+      text = text,
+      position = anchor.position,
+      surface = anchor.surface,
+    })
+  end)
+end
+
+-----------------------------------------------------------------------------
 -- Applies the settings to an inserter.
 -- @param game LuaGameScript: The game object.
 -- @param entity LuaEntity: The inserter to configure.
 -- @param data table: Information about the recipe being crafted.
--- @return nil
+-- @return table: The result of applying the settings.
 function lib.apply_inserter_settings(game, player, inserter, data)
-  EntityView.resolve(inserter):apply_inserter_settings(game, player, data)
+  local view = EntityView.resolve(inserter)
+  local result = view:apply_inserter_settings(game, player, data)
+  lib.show_output_limit_text(player, view, data, result)
+  return result
 end
 
 -----------------------------------------------------------------------------

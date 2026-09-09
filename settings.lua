@@ -26,9 +26,30 @@ data:extend({
     default_value = true,
   },
   {
+    type = "bool-setting",
+    name = "paste-logistic-settings-continued-show-output-limit-text",
+    order = "a[d]",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
+  {
+    type = "bool-setting",
+    name = "paste-logistic-settings-continued-output-limit-text-stacks",
+    order = "a[e]",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
+  {
+    type = "bool-setting",
+    name = "paste-logistic-settings-continued-output-limit-text-items",
+    order = "a[f]",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
+  {
     type = "string-setting",
     name = "paste-logistic-settings-continued-request-size-type",
-    order = "a[d]",
+    order = "a[g]",
     setting_type = "runtime-per-user",
     default_value = "stacks",
     allowed_values = {
@@ -39,7 +60,7 @@ data:extend({
   {
     type = "int-setting",
     name = "paste-logistic-settings-continued-request-size",
-    order = "a[e]",
+    order = "a[h]",
     setting_type = "runtime-per-user",
     default_value = 1,
     minimum_value = 1,

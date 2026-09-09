@@ -88,6 +88,177 @@ describe("lib", function()
     assert.equal(13, behavior.logistic_condition.constant)
   end)
 
+  -- Floating text for the applied output limit ------------------------------
+
+  -- Builds an inserter feeding a chest, with settings tuned so the limit lands
+  -- on a round "1 stack / 100 items" for legibility.
+  local function make_output_limit_fixture(overrides)
+    local values = {
+      ["paste-logistic-settings-continued-output-limit-type"] = { value = "stacks" },
+      ["paste-logistic-settings-continued-output-limit"] = { value = 1 },
+      ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = { value = false },
+      ["paste-logistic-settings-continued-show-output-limit-text"] = { value = true },
+      ["paste-logistic-settings-continued-output-limit-text-stacks"] = { value = true },
+      ["paste-logistic-settings-continued-output-limit-text-items"] = { value = true },
+    }
+    for key, value in pairs(overrides or {}) do
+      values[key] = { value = value }
+    end
+    _G.settings = Support.make_settings(values)
+
+    local shown = {}
+    local chest = {
+      valid = true,
+      type = "logistic-container",
+      position = { x = 5, y = 6 },
+      surface = "nauvis",
+    }
+    local inserter = {
+      valid = true,
+      type = "inserter",
+      position = { x = 1, y = 2 },
+      surface = "nauvis",
+      drop_target = chest,
+      get_or_create_control_behavior = function()
+        return {}
+      end,
+    }
+    local player = {
+      index = 1,
+      create_local_flying_text = function(params)
+        shown[#shown + 1] = params
+      end,
+    }
+
+    return {
+      shown = shown,
+      chest = chest,
+      inserter = inserter,
+      player = player,
+      paste = function()
+        lib.apply_inserter_settings(nil, player, inserter, {
+          item = true,
+          name = "transport-belt",
+          quality = 0,
+        })
+      end,
+    }
+  end
+
+  it("shows the output limit as floating text over the chest the inserter feeds", function()
+    local fixture = make_output_limit_fixture()
+
+    fixture.paste()
+
+    assert.equal(1, #fixture.shown)
+    local shown = fixture.shown[1]
+    -- Over the chest, not the inserter and not the player.
+    assert.same({ x = 5, y = 6 }, shown.position)
+    assert.equal("nauvis", shown.surface)
+    assert.same({
+      "",
+      { "floating-text.paste-logistic-settings-continued-stacks", "1" },
+      " / ",
+      "100x [item=transport-belt]",
+    }, shown.text)
+  end)
+
+  it("leaves speed and time_to_live unset so Factorio can pace long text", function()
+    local fixture = make_output_limit_fixture()
+
+    fixture.paste()
+
+    assert.is_nil(fixture.shown[1].speed)
+    assert.is_nil(fixture.shown[1].time_to_live)
+  end)
+
+  it("anchors the floating text to the inserter when it does not feed a chest", function()
+    local fixture = make_output_limit_fixture()
+    fixture.inserter.drop_target = { valid = true, type = "transport-belt", position = { x = 9, y = 9 } }
+
+    fixture.paste()
+
+    assert.equal(1, #fixture.shown)
+    assert.same({ x = 1, y = 2 }, fixture.shown[1].position)
+  end)
+
+  it("shows no floating text when the feature is disabled", function()
+    local fixture = make_output_limit_fixture({
+      ["paste-logistic-settings-continued-show-output-limit-text"] = false,
+    })
+
+    fixture.paste()
+
+    assert.equal(0, #fixture.shown)
+  end)
+
+  it("shows only the stack half when items are disabled", function()
+    local fixture = make_output_limit_fixture({
+      ["paste-logistic-settings-continued-output-limit-text-items"] = false,
+    })
+
+    fixture.paste()
+
+    assert.same({ "floating-text.paste-logistic-settings-continued-stacks", "1" }, fixture.shown[1].text)
+  end)
+
+  it("shows only the item half when stacks are disabled", function()
+    local fixture = make_output_limit_fixture({
+      ["paste-logistic-settings-continued-output-limit-text-stacks"] = false,
+    })
+
+    fixture.paste()
+
+    assert.same("100x [item=transport-belt]", fixture.shown[1].text)
+  end)
+
+  it("shows no floating text when both halves are disabled", function()
+    local fixture = make_output_limit_fixture({
+      ["paste-logistic-settings-continued-output-limit-text-stacks"] = false,
+      ["paste-logistic-settings-continued-output-limit-text-items"] = false,
+    })
+
+    fixture.paste()
+
+    assert.equal(0, #fixture.shown)
+  end)
+
+  it("reports the accumulated total rather than the increment", function()
+    local fixture = make_output_limit_fixture({
+      ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = true,
+    })
+    fixture.inserter.get_or_create_control_behavior = function()
+      return {
+        logistic_condition = {
+          comparator = "<",
+          first_signal = { name = "transport-belt" },
+          constant = 100,
+        },
+      }
+    end
+
+    fixture.paste()
+
+    assert.same({
+      "",
+      { "floating-text.paste-logistic-settings-continued-stacks", "2" },
+      " / ",
+      "200x [item=transport-belt]",
+    }, fixture.shown[1].text)
+  end)
+
+  it("stays quiet for ghost inserters", function()
+    local fixture = make_output_limit_fixture()
+    fixture.inserter.type = "entity-ghost"
+    fixture.inserter.ghost_type = "inserter"
+    fixture.inserter.ghost_name = "fast-inserter"
+    fixture.inserter.ghost_prototype = {}
+
+    fixture.paste()
+
+    assert.equal(0, #fixture.shown)
+  end)
+
   it("apply_inserter_settings defaults missing accumulation setting to enabled", function()
     _G.settings = Support.make_settings({
       ["paste-logistic-settings-continued-output-limit-type"] = { value = "items" },

@@ -10,7 +10,7 @@ RELEASE_FILES=(
   info.json
   locale
   settings.lua
-  src 
+  src
   thumbnail.png
 )
 OLD_VERSIONS="old-releases"
@@ -71,4 +71,3 @@ git push origin v$VERSION
 
 # Clean up the release directory.
 rm -rf $RELEASE_DIR
-
