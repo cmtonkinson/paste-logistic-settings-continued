@@ -3,7 +3,7 @@ globals = {
   "data",
   "defines",
   "game",
-  "global",
+  "storage",
   "prototypes",
   "script",
   "settings",

@@ -68,7 +68,7 @@ describe("entity_view", function()
       ghost_prototype = {},
     }
 
-    assert.is_true(EntityView.same_effective_name(built, ghost))
+    assert.is_true(EntityView.resolve(built):same_effective_name(ghost))
   end)
 
   it("compares raw entities without treating them like resolved views", function()
@@ -133,5 +133,153 @@ describe("entity_view", function()
     assert.is_true(behavior.connect_to_logistic_network)
     assert.equal("transport-belt", behavior.logistic_condition.first_signal.name)
     assert.equal("rare", behavior.logistic_condition.first_signal.quality)
+  end)
+
+  it("has_same_ingredient_names ignores order but rejects mismatches", function()
+    local filters = {
+      { value = { name = "iron-gear-wheel" } },
+      { value = { name = "iron-plate" } },
+    }
+    local ingredients = {
+      { name = "iron-plate" },
+      { name = "iron-gear-wheel" },
+    }
+
+    assert.is_true(EntityView.has_same_ingredient_names(filters, ingredients))
+    assert.is_false(EntityView.has_same_ingredient_names(filters, { { name = "iron-plate" } }))
+  end)
+
+  it("get_or_create_request_section reuses the single blank unnamed section", function()
+    local blank = Support.make_section("", {})
+    local point = {
+      sections_count = 1,
+      sections = { blank },
+      add_section = function()
+        error("should not add a new section")
+      end,
+    }
+    local entity = {
+      get_logistic_point = function()
+        return point
+      end,
+    }
+
+    local section = EntityView.resolve(entity)
+      :get_or_create_request_section({ ingredients = { { name = "iron-plate" } } })
+    assert.equal(blank, section)
+  end)
+
+  it("get_or_create_request_section returns nil without a logistic point", function()
+    local entity = {
+      get_logistic_point = function()
+        return nil
+      end,
+    }
+
+    assert.is_nil(
+      EntityView.resolve(entity):get_or_create_request_section({ ingredients = { { name = "iron-plate" } } })
+    )
+  end)
+
+  it("get_or_create_request_section falls back to sections owners after nil candidates", function()
+    local added = Support.make_section("", {})
+    local requester_sections = {
+      sections_count = 0,
+      sections = {},
+      add_section = function()
+        return added
+      end,
+    }
+    local entity = {
+      get_logistic_sections = function()
+        return nil
+      end,
+      get_requester_point = function()
+        return {
+          sections = requester_sections,
+        }
+      end,
+      get_logistic_point = function()
+        return nil
+      end,
+    }
+
+    local section = EntityView.resolve(entity)
+      :get_or_create_request_section({ ingredients = { { name = "iron-plate" } } })
+
+    assert.equal(added, section)
+  end)
+
+  it("get_or_create_request_section replaces matching unnamed sections", function()
+    local matching = Support.make_section("", {
+      { value = { name = "iron-plate" } },
+      { value = { name = "iron-gear-wheel" } },
+    })
+    local added = Support.make_section("", {})
+    local point = {}
+    point.sections_count = 1
+    point.sections = { matching }
+    point.remove_section = function(idx)
+      table.remove(point.sections, idx)
+      point.sections_count = #point.sections
+    end
+    point.add_section = function()
+      table.insert(point.sections, added)
+      point.sections_count = #point.sections
+      return added
+    end
+    local entity = {
+      get_logistic_point = function()
+        return point
+      end,
+    }
+
+    local section = EntityView.resolve(entity):get_or_create_request_section({
+      ingredients = {
+        { name = "iron-gear-wheel" },
+        { name = "iron-plate" },
+      },
+    })
+
+    assert.equal(added, section)
+    assert.equal(1, point.sections_count)
+    assert.equal(added, point.sections[1])
+  end)
+
+  it("get_or_create_request_section removes extra blank unnamed sections but preserves named ones", function()
+    local named = Support.make_section("Keep me", {
+      { value = { name = "copper-plate" } },
+    })
+    local blank_one = Support.make_section("", {})
+    local blank_two = Support.make_section("", {})
+    local added = Support.make_section("", {})
+    local point = {}
+    point.sections_count = 3
+    point.sections = { named, blank_one, blank_two }
+    point.remove_section = function(idx)
+      table.remove(point.sections, idx)
+      point.sections_count = #point.sections
+    end
+    point.add_section = function()
+      table.insert(point.sections, added)
+      point.sections_count = #point.sections
+      return added
+    end
+    local entity = {
+      get_logistic_point = function()
+        return point
+      end,
+    }
+
+    local section = EntityView.resolve(entity):get_or_create_request_section({
+      ingredients = {
+        { name = "iron-plate" },
+      },
+    })
+
+    assert.equal(2, point.sections_count)
+    assert.equal(named, point.sections[1])
+    assert.equal(added, section)
+    assert.equal(added, point.sections[2])
   end)
 end)

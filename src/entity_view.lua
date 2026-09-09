@@ -1,3 +1,5 @@
+local helpers = require("src.helpers")
+
 local EntityView = {}
 
 local ViewMethods = {}
@@ -25,31 +27,6 @@ local function pluck_set(tbl, key)
     set[entry[key]] = true
   end
   return set
-end
-
-local function get_limit(prototype, limit_type, limit)
-  if limit_type == "stacks" then
-    return prototype.stack_size * limit
-  elseif limit_type == "items" then
-    return limit
-  end
-  return 0
-end
-
-local function get_quality_string(quality_id)
-  local mapping = {
-    [0] = "normal",
-    [1] = "uncommon",
-    [2] = "rare",
-    [3] = "epic",
-    [5] = "legendary",
-  }
-
-  if not quality_id or mapping[quality_id] == nil then
-    return "normal"
-  end
-
-  return mapping[quality_id]
 end
 
 local function ok_result()
@@ -123,10 +100,6 @@ function EntityView.resolve(entity)
     type = effective_type,
     prototype = effective_prototype,
   }, EntityView.metatable)
-end
-
-function EntityView.same_effective_name(a, b)
-  return with_view(a):same_effective_name(b)
 end
 
 function EntityView.has_same_ingredient_names(filters, ingredients)
@@ -449,7 +422,7 @@ function ViewMethods:apply_storage_settings(game, player, data)
   local ok, err = pcall(function()
     self.entity.storage_filter = {
       name = data.name,
-      quality = get_quality_string(data.quality),
+      quality = helpers.get_quality_string(data.quality),
     }
   end)
   if not ok then
@@ -471,7 +444,7 @@ function ViewMethods:apply_requester_settings(game, player, data)
     local prototype = prototypes.item[ingredient.name]
     if prototype then
       local player_settings = settings.get_player_settings(player.index)
-      local quota = get_limit(
+      local quota = helpers.get_limit(
         prototype,
         player_settings["paste-logistic-settings-continued-request-size-type"].value,
         player_settings["paste-logistic-settings-continued-request-size"].value
@@ -481,7 +454,7 @@ function ViewMethods:apply_requester_settings(game, player, data)
         value = {
           type = "item",
           name = ingredient.name,
-          quality = get_quality_string(data.quality),
+          quality = helpers.get_quality_string(data.quality),
         },
         mode = "at-least",
         min = quota,
@@ -527,7 +500,7 @@ function ViewMethods:apply_inserter_settings(game, player, data)
   end
 
   local player_settings = settings.get_player_settings(player.index)
-  local limit = get_limit(
+  local limit = helpers.get_limit(
     prototype,
     player_settings["paste-logistic-settings-continued-output-limit-type"].value,
     player_settings["paste-logistic-settings-continued-output-limit"].value
@@ -548,7 +521,7 @@ function ViewMethods:apply_inserter_settings(game, player, data)
     behavior.connect_to_logistic_network = true
     behavior.logistic_condition = {
       comparator = "<",
-      first_signal = { type = "item", name = data.name, quality = get_quality_string(data.quality) },
+      first_signal = { type = "item", name = data.name, quality = helpers.get_quality_string(data.quality) },
       constant = limit,
     }
   end)

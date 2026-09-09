@@ -1,28 +1,6 @@
 local helpers = require("src.helpers")
 
 describe("helpers", function()
-  it("pluck extracts the requested key", function()
-    local rows = {
-      { name = "a", val = 1 },
-      { name = "b", val = 2 },
-      { name = "c", val = 3 },
-    }
-
-    assert.same({ "a", "b", "c" }, helpers.pluck(rows, "name"))
-    assert.same({ 1, 2, 3 }, helpers.pluck(rows, "val"))
-  end)
-
-  it("pluck_set extracts the requested key as a set", function()
-    local rows = {
-      { name = "a", val = 1 },
-      { name = "b", val = 2 },
-      { name = "c", val = 3 },
-    }
-
-    assert.same({ a = true, b = true, c = true }, helpers.pluck_set(rows, "name"))
-    assert.same({ [1] = true, [2] = true, [3] = true }, helpers.pluck_set(rows, "val"))
-  end)
-
   it("format_amount drops decimals that carry no information", function()
     assert.equal("1", helpers.format_amount(1))
     assert.equal("2", helpers.format_amount(2.0))
@@ -97,117 +75,68 @@ describe("helpers", function()
     assert.same({ { 1, 2 }, { 1, 2 } }, helpers.get_area(nil, entity, -99))
   end)
 
-  it("detects crafting machines via get_recipe", function()
-    local machine = {
-      valid = true,
-      get_recipe = function()
-        return { name = "transport-belt" }
-      end,
-    }
-    local not_machine = {
-      valid = true,
-      get_recipe = function()
-        error("no recipe")
-      end,
-    }
-
-    assert.is_true(helpers.is_crafting_machine(nil, machine))
-    assert.is_false(helpers.is_crafting_machine(nil, not_machine))
-    assert.is_false(helpers.is_crafting_machine(nil, nil))
-  end)
-
-  it("detects valid copy sources", function()
-    local machine = {
-      valid = true,
-      get_recipe = function()
-        return { name = "transport-belt" }
-      end,
-    }
-    local empty_machine = {
-      valid = true,
-      get_recipe = function()
-        return nil
-      end,
-    }
-
-    assert.is_true(helpers.is_valid_source(nil, machine))
-    assert.is_false(helpers.is_valid_source(nil, empty_machine))
-  end)
-
-  it("detects valid paste targets", function()
-    local machine = {
-      valid = true,
-      get_recipe = function()
-        return { name = "transport-belt" }
-      end,
-    }
-    local logistic_container = {
-      valid = true,
-      type = "logistic-container",
-    }
-    local inserter = {
-      valid = true,
-      type = "inserter",
-      get_or_create_control_behavior = function() end,
-    }
-    local lamp = {
-      valid = true,
-      type = "lamp",
-    }
-
-    assert.is_truthy(helpers.is_valid_target(nil, machine))
-    assert.is_truthy(helpers.is_valid_target(nil, logistic_container))
-    assert.is_truthy(helpers.is_valid_target(nil, inserter))
-    assert.is_falsy(helpers.is_valid_target(nil, lamp))
-    assert.is_falsy(helpers.is_valid_target(nil, nil))
-  end)
-
-  it("detects storage and requester chest modes", function()
-    local storage = {
-      valid = true,
-      type = "logistic-container",
-      prototype = { logistic_mode = "storage" },
-    }
-    local requester = {
-      valid = true,
-      type = "logistic-container",
-      prototype = { logistic_mode = "requester" },
-    }
-    local buffer = {
-      valid = true,
-      type = "logistic-container",
-      prototype = { logistic_mode = "buffer" },
-    }
-    local passive = {
-      valid = true,
-      type = "logistic-container",
-      prototype = { logistic_mode = "passive-provider" },
-    }
-
-    assert.is_true(helpers.is_storage_chest(nil, storage))
-    assert.is_false(helpers.is_storage_chest(nil, requester))
-    assert.is_true(helpers.is_requester_chest(nil, requester))
-    assert.is_true(helpers.is_requester_chest(nil, buffer))
-    assert.is_false(helpers.is_requester_chest(nil, passive))
-  end)
-
   it("calculates item limits from stacks or items", function()
     local proto = { stack_size = 100 }
 
-    assert.equal(300, helpers.get_limit(nil, proto, "stacks", 3))
-    assert.equal(7, helpers.get_limit(nil, proto, "items", 7))
-    assert.equal(0, helpers.get_limit(nil, proto, "weird", 7))
+    assert.equal(300, helpers.get_limit(proto, "stacks", 3))
+    assert.equal(7, helpers.get_limit(proto, "items", 7))
+    assert.equal(0, helpers.get_limit(proto, "weird", 7))
   end)
 
-  it("maps quality ids to Factorio quality names", function()
-    assert.equal("normal", helpers.get_quality_string(nil))
-    assert.equal("normal", helpers.get_quality_string(0))
-    assert.equal("uncommon", helpers.get_quality_string(1))
-    assert.equal("rare", helpers.get_quality_string(2))
-    assert.equal("epic", helpers.get_quality_string(3))
-    assert.equal("legendary", helpers.get_quality_string(5))
-    assert.equal("normal", helpers.get_quality_string(4))
-    assert.equal("normal", helpers.get_quality_string(999))
+  -- get_quality_string resolves against the game's quality prototypes, so these
+  -- stand up a registry instead of assuming a fixed table of levels.
+  local function with_qualities(levels, fn)
+    local original = rawget(_G, "prototypes")
+    local quality = nil
+    if levels then
+      quality = {}
+      for name, level in pairs(levels) do
+        quality[name] = { name = name, level = level }
+      end
+    end
+    _G.prototypes = quality and { quality = quality } or nil
+    local ok, err = pcall(fn)
+    _G.prototypes = original
+    if not ok then
+      error(err, 0)
+    end
+  end
+
+  local VANILLA_QUALITIES = { normal = 0, uncommon = 1, rare = 2, epic = 3, legendary = 5 }
+
+  it("resolves quality levels from the game's quality prototypes", function()
+    with_qualities(VANILLA_QUALITIES, function()
+      assert.equal("normal", helpers.get_quality_string(0))
+      assert.equal("uncommon", helpers.get_quality_string(1))
+      assert.equal("rare", helpers.get_quality_string(2))
+      assert.equal("epic", helpers.get_quality_string(3))
+      assert.equal("legendary", helpers.get_quality_string(5))
+    end)
+  end)
+
+  it("resolves a modded quality tier the old fixed table could not", function()
+    -- Vanilla leaves level 4 empty; the hardcoded map reported it as normal,
+    -- so a mod occupying that level got the wrong quality pasted silently.
+    with_qualities({ normal = 0, mythic = 4, legendary = 5 }, function()
+      assert.equal("mythic", helpers.get_quality_string(4))
+    end)
+  end)
+
+  it("falls back to normal for levels nothing claims", function()
+    with_qualities(VANILLA_QUALITIES, function()
+      assert.equal("normal", helpers.get_quality_string(4))
+      assert.equal("normal", helpers.get_quality_string(999))
+    end)
+  end)
+
+  it("falls back to normal without a quality registry or a numeric level", function()
+    with_qualities(nil, function()
+      assert.equal("normal", helpers.get_quality_string(2))
+    end)
+    with_qualities(VANILLA_QUALITIES, function()
+      assert.equal("normal", helpers.get_quality_string(nil))
+      assert.equal("normal", helpers.get_quality_string("rare"))
+    end)
   end)
 
   it("detects when the player is holding anything", function()

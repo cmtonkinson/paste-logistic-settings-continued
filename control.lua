@@ -6,6 +6,14 @@ local EntityView = require("__paste-logistic-settings-continued__.src.entity_vie
 local EVENT_NAMESPACE = "paste-logistic-settings-continued"
 
 -----------------------------------------------------------------------------
+-- `storage` is the table Factorio serialises into the save; before 2.0 it was
+-- named differently. State kept anywhere else is neither persisted across a
+-- save/load nor synchronised between peers in multiplayer.
+script.on_init(function()
+  storage.paste_data = {}
+end)
+
+-----------------------------------------------------------------------------
 -- Copy hotkey
 script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
   local player = game.players[event.player_index]
@@ -18,10 +26,8 @@ script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
     return
   end
 
-  global = global or {}
-  global.paste_data = global.paste_data or {}
-
-  global.paste_data[event.player_index] = lib.copy_settings(game, player, target)
+  storage.paste_data = storage.paste_data or {}
+  storage.paste_data[event.player_index] = lib.copy_settings(game, player, target)
 end)
 
 -----------------------------------------------------------------------------
@@ -43,9 +49,8 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
     return
   end
 
-  global = global or {}
-  global.paste_data = global.paste_data or {}
-  local data = global.paste_data[event.player_index]
+  storage.paste_data = storage.paste_data or {}
+  local data = storage.paste_data[event.player_index]
   if not data or not data.source then
     return
   end
@@ -65,6 +70,8 @@ end)
 -----------------------------------------------------------------------------
 -- Migrations
 script.on_configuration_changed(function(data)
+  storage.paste_data = storage.paste_data or {}
+
   -- Migrations to 1.3.0
   for _, player in pairs(game.players) do
     local ps = settings.get_player_settings(player)

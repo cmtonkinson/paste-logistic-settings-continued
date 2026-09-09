@@ -39,6 +39,13 @@ function Support.with_mocked_factorio_globals()
       ["iron-gear-wheel"] = { stack_size = 100, name = "iron-gear-wheel" },
       sulfur = { stack_size = 50, name = "sulfur" },
     },
+    quality = {
+      normal = { name = "normal", level = 0 },
+      uncommon = { name = "uncommon", level = 1 },
+      rare = { name = "rare", level = 2 },
+      epic = { name = "epic", level = 3 },
+      legendary = { name = "legendary", level = 5 },
+    },
   }
 
   _G.settings = Support.make_settings({
@@ -88,7 +95,9 @@ end
 function Support.make_control_harness()
   local original_script = rawget(_G, "script")
   local original_game = rawget(_G, "game")
-  local original_global = rawget(_G, "global")
+  local original_storage = rawget(_G, "storage")
+  -- Factorio always provides storage; tests that care override it.
+  _G.storage = {}
   local original_settings = rawget(_G, "settings")
   local original_helpers_preload = package.preload["__paste-logistic-settings-continued__.src.helpers"]
   local original_lib_preload = package.preload["__paste-logistic-settings-continued__.src.lib"]
@@ -151,6 +160,9 @@ function Support.make_control_harness()
     on_event = function(name, fn)
       harness.handlers[name] = fn
     end,
+    on_init = function(fn)
+      harness.handlers.init = fn
+    end,
     on_configuration_changed = function(fn)
       harness.handlers.configuration_changed = fn
     end,
@@ -166,7 +178,7 @@ function Support.make_control_harness()
   function harness.restore()
     _G.script = original_script
     _G.game = original_game
-    _G.global = original_global
+    _G.storage = original_storage
     _G.settings = original_settings
     package.preload["__paste-logistic-settings-continued__.src.helpers"] = original_helpers_preload
     package.preload["__paste-logistic-settings-continued__.src.lib"] = original_lib_preload

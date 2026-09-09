@@ -518,150 +518,6 @@ describe("lib", function()
     assert.equal("fast-inserter", calls[1].ghost_name)
   end)
 
-  it("has_same_ingredient_names ignores order but rejects mismatches", function()
-    local filters = {
-      { value = { name = "iron-gear-wheel" } },
-      { value = { name = "iron-plate" } },
-    }
-    local ingredients = {
-      { name = "iron-plate" },
-      { name = "iron-gear-wheel" },
-    }
-
-    assert.is_true(lib.has_same_ingredient_names(nil, nil, filters, ingredients))
-    assert.is_false(lib.has_same_ingredient_names(nil, nil, filters, { { name = "iron-plate" } }))
-  end)
-
-  it("get_or_create_section reuses the single blank unnamed section", function()
-    local blank = Support.make_section("", {})
-    local point = {
-      sections_count = 1,
-      sections = { blank },
-      add_section = function()
-        error("should not add a new section")
-      end,
-    }
-    local entity = {
-      get_logistic_point = function()
-        return point
-      end,
-    }
-
-    local section = lib.get_or_create_section(nil, nil, entity, { ingredients = { { name = "iron-plate" } } })
-    assert.equal(blank, section)
-  end)
-
-  it("get_or_create_section returns nil without a logistic point", function()
-    local entity = {
-      get_logistic_point = function()
-        return nil
-      end,
-    }
-
-    assert.is_nil(lib.get_or_create_section(nil, nil, entity, { ingredients = { { name = "iron-plate" } } }))
-  end)
-
-  it("get_or_create_section falls back to sections owners after nil candidates", function()
-    local added = Support.make_section("", {})
-    local requester_sections = {
-      sections_count = 0,
-      sections = {},
-      add_section = function()
-        return added
-      end,
-    }
-    local entity = {
-      get_logistic_sections = function()
-        return nil
-      end,
-      get_requester_point = function()
-        return {
-          sections = requester_sections,
-        }
-      end,
-      get_logistic_point = function()
-        return nil
-      end,
-    }
-
-    local section = lib.get_or_create_section(nil, nil, entity, { ingredients = { { name = "iron-plate" } } })
-
-    assert.equal(added, section)
-  end)
-
-  it("get_or_create_section replaces matching unnamed sections", function()
-    local matching = Support.make_section("", {
-      { value = { name = "iron-plate" } },
-      { value = { name = "iron-gear-wheel" } },
-    })
-    local added = Support.make_section("", {})
-    local point = {}
-    point.sections_count = 1
-    point.sections = { matching }
-    point.remove_section = function(idx)
-      table.remove(point.sections, idx)
-      point.sections_count = #point.sections
-    end
-    point.add_section = function()
-      table.insert(point.sections, added)
-      point.sections_count = #point.sections
-      return added
-    end
-    local entity = {
-      get_logistic_point = function()
-        return point
-      end,
-    }
-
-    local section = lib.get_or_create_section(nil, nil, entity, {
-      ingredients = {
-        { name = "iron-gear-wheel" },
-        { name = "iron-plate" },
-      },
-    })
-
-    assert.equal(added, section)
-    assert.equal(1, point.sections_count)
-    assert.equal(added, point.sections[1])
-  end)
-
-  it("get_or_create_section removes extra blank unnamed sections but preserves named ones", function()
-    local named = Support.make_section("Keep me", {
-      { value = { name = "copper-plate" } },
-    })
-    local blank_one = Support.make_section("", {})
-    local blank_two = Support.make_section("", {})
-    local added = Support.make_section("", {})
-    local point = {}
-    point.sections_count = 3
-    point.sections = { named, blank_one, blank_two }
-    point.remove_section = function(idx)
-      table.remove(point.sections, idx)
-      point.sections_count = #point.sections
-    end
-    point.add_section = function()
-      table.insert(point.sections, added)
-      point.sections_count = #point.sections
-      return added
-    end
-    local entity = {
-      get_logistic_point = function()
-        return point
-      end,
-    }
-
-    local section = lib.get_or_create_section(nil, nil, entity, {
-      ingredients = {
-        { name = "iron-plate" },
-      },
-    })
-
-    assert.equal(2, point.sections_count)
-    assert.equal(named, point.sections[1])
-    assert.equal(added, section)
-    assert.equal(added, point.sections[2])
-  end)
-
   it("apply_chest_settings configures storage filters and requester slots", function()
     local requester_section = Support.make_section("", {})
     local requester = {
@@ -865,6 +721,85 @@ describe("lib", function()
     lib.paste_settings = original_paste_settings
 
     assert.same({ ghost_output_inserter, ghost_storage }, calls)
+  end)
+
+  it("builds requester ghosts through a blueprint so request filters survive", function()
+    local built = { valid = true, name = "entity-ghost" }
+    local captured = {}
+    local destroyed = false
+    local stack = {
+      set_stack = function() end,
+      set_blueprint_entities = function(entities)
+        captured.entities = entities
+      end,
+      is_blueprint_setup = function()
+        return true
+      end,
+      build_blueprint = function(params)
+        captured.build = params
+        return { built }
+      end,
+    }
+    local inventory = {
+      valid = true,
+      [1] = stack,
+      destroy = function()
+        destroyed = true
+      end,
+    }
+    local game = {
+      create_inventory = function()
+        return inventory
+      end,
+    }
+    local surface = {
+      create_entity = function()
+        error("fell back to a plain ghost instead of using the blueprint")
+      end,
+    }
+
+    local entity = lib.create_ghost_entity(game, surface, "player", {
+      role = "input_chest",
+      name = "requester-chest",
+      position = { x = 1, y = 2 },
+    }, { index = 1 }, { ingredients = { { name = "iron-plate" } }, quality = 0 })
+
+    assert.equal(built, entity)
+    assert.is_true(destroyed)
+
+    -- The filters are the whole point of the blueprint route: nothing else
+    -- puts requests on a *ghost* requester, so losing this route loses them.
+    local filters = captured.entities[1].request_filters.sections[1].filters
+    assert.equal("iron-plate", filters[1].name)
+    assert.equal("normal", filters[1].quality)
+    assert.equal(7, filters[1].count)
+  end)
+
+  it("falls back to a plain ghost when the blueprint route fails", function()
+    local created
+    local game = {
+      create_inventory = function()
+        return nil
+      end,
+    }
+    local surface = {
+      create_entity = function(params)
+        created = params
+        return { valid = true }
+      end,
+    }
+
+    lib.create_ghost_entity(game, surface, "player", {
+      role = "input_chest",
+      name = "requester-chest",
+      position = { x = 1, y = 2 },
+    }, { index = 1 }, { ingredients = { { name = "iron-plate" } } })
+
+    -- Documented rather than desired: this ghost carries no request filters,
+    -- and the fallback is silent. ghost_autoplace asserts on the filters
+    -- in-game so a regression to this path fails loudly there.
+    assert.equal("entity-ghost", created.name)
+    assert.equal("requester-chest", created.inner_name)
   end)
 
   it("copy_settings returns nil without a recipe and filters fluid ingredients", function()

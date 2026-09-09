@@ -26,12 +26,12 @@ describe("control", function()
         [1] = { selected = target },
       },
     }
-    _G.global = nil
+    _G.storage = {}
 
     harness.load_control()
     harness.handlers["paste-logistic-settings-continued-copy"]({ player_index = 1 })
 
-    assert.same({ source = target, copied = true }, global.paste_data[1])
+    assert.same({ source = target, copied = true }, storage.paste_data[1])
     assert.equal("copy", harness.lib_calls[1].kind)
   end)
 
@@ -42,7 +42,7 @@ describe("control", function()
         [1] = { selected = source },
       },
     }
-    _G.global = {
+    _G.storage = {
       paste_data = {
         [1] = { source = source },
       },
@@ -56,7 +56,7 @@ describe("control", function()
     harness.handlers["paste-logistic-settings-continued-paste"]({ player_index = 1 })
 
     assert.same({}, harness.lib_calls)
-    assert.same({ source = source }, global.paste_data[1])
+    assert.same({ source = source }, storage.paste_data[1])
   end)
 
   it("paste handler dispatches between autoconfigure and direct paste", function()
@@ -68,7 +68,7 @@ describe("control", function()
         [1] = { selected = same_target },
       },
     }
-    _G.global = {
+    _G.storage = {
       paste_data = {
         [1] = { source = source },
       },
@@ -91,7 +91,7 @@ describe("control", function()
         [1] = { selected = nil },
       },
     }
-    _G.global = { paste_data = {} }
+    _G.storage = { paste_data = {} }
 
     harness.load_control()
     harness.handlers["paste-logistic-settings-continued-paste"]({ player_index = 1 })
@@ -112,7 +112,7 @@ describe("control", function()
         [1] = { selected = target },
       },
     }
-    _G.global = {
+    _G.storage = {
       paste_data = {
         [1] = { source = { name = "assembling-machine-2" } },
       },
@@ -132,6 +132,32 @@ describe("control", function()
     harness.handlers["paste-logistic-settings-continued-paste"]({ player_index = 1 })
 
     assert.same({}, harness.lib_calls)
+  end)
+
+  it("on_init seeds the persisted paste table", function()
+    _G.storage = {}
+
+    harness.load_control()
+    harness.handlers.init()
+
+    -- paste_data has to live on storage: Factorio only serialises that table
+    -- into the save, and only that table is synchronised in multiplayer.
+    assert.same({}, storage.paste_data)
+  end)
+
+  it("configuration_changed backfills paste_data when upgrading from a save without it", function()
+    _G.storage = {}
+    _G.settings = {
+      get_player_settings = function()
+        return {}
+      end,
+    }
+    _G.game = { players = {} }
+
+    harness.load_control()
+    harness.handlers.configuration_changed({})
+
+    assert.same({}, storage.paste_data)
   end)
 
   it("migration handler prints warnings for low legacy settings", function()

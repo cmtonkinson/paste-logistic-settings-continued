@@ -236,7 +236,6 @@ local function create_requester_ghost_from_blueprint(game, surface, force, spec,
                       name = ingredient.name,
                       quality = helpers.get_quality_string(data.quality),
                       count = helpers.get_limit(
-                        nil,
                         prototype,
                         get_player_setting_value(
                           player,
@@ -443,29 +442,6 @@ function lib.apply_inserter_settings(game, player, inserter, data)
   local result = view:apply_inserter_settings(game, player, data)
   lib.show_output_limit_text(player, view, data, result)
   return result
-end
-
------------------------------------------------------------------------------
--- Checks if the filters in the given logistic section match the ingredients
--- of the given recipe.
--- @param game LuaGameScript: The game object.
--- @param filters table: The filters to check.
--- @param ingredients table: The ingredients to check against.
--- @return boolean: True if the filters match the ingredients, false otherwise.
-function lib.has_same_ingredient_names(game, player, filters, ingredients)
-  return EntityView.has_same_ingredient_names(filters, ingredients)
-end
-
------------------------------------------------------------------------------
--- Return a LuaLogisticSection suitable for configuring slots with the ingredients.
--- @param game LuaGameScript: The game object.
--- @param entity LuaEntity: The entity to configure.
--- @param data table: Information about the recipe being crafted.
--- @return LuaLogisticSection: The section to configure.
--- Ensures it does not create uneccessary sections, and will override an existing
--- section if the ingredients are the same (quantity and order may be overridden).
-function lib.get_or_create_section(game, player, entity, data)
-  return EntityView.resolve(entity):get_or_create_request_section(data)
 end
 
 -----------------------------------------------------------------------------
