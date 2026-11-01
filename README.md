@@ -18,9 +18,10 @@ This requires [uv], for `uvx`, and a C compiler. Set `HEREROCKS` to change how
 hererocks is invoked; CI installs it directly and passes `HEREROCKS=hererocks`.
 
 `make verify` runs format checking, linting, and tests, then the `factestio`
-integration suite; CI sets `CI`, which skips that last step. Everything before
-it runs identically in both places. `make format` rewrites files rather than
-only checking them.
+integration suite; CI sets `CI`, which skips that last step there and runs the
+suite as its own `integration` job against headless Factorio once the checks
+pass. Everything before it runs identically in both places. `make format`
+rewrites files rather than only checking them.
 
 `stylua` is not a LuaRocks package and must be installed separately with
 `brew install stylua`.
@@ -36,7 +37,8 @@ export PATH="$PWD/.hererocks/bin:$PATH"
 ```
 
 The `factestio` target drives a real Factorio install, so it needs more than the
-Lua toolchain: `brew install cmtonkinson/tap/factestio`, then a one-time
+Lua toolchain: `brew install cmtonkinson/tap/factestio` (0.7.0 or later; earlier
+releases exit 0 even when tests fail), then a one-time
 `factestio activate` in this directory. Activation scaffolds the gitignored
 `factestio/config.lua`, symlinks the mod into Factorio's data directory, and
 rewrites `mod-list.json` to disable other mods; `factestio deactivate` restores

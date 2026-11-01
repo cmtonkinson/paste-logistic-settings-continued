@@ -29,11 +29,84 @@ jobs:
       - name: Install hererocks
         run: pip install hererocks
 
+      # stylua gates syntax variants behind cargo features, and the default set
+      # omits lua52 -- without it .stylua.toml's `syntax = "Lua52"` is rejected.
+      # Homebrew builds with --all-features, which is why this only bites in CI.
       - name: Install stylua
-        run: cargo install stylua
+        run: cargo install stylua --features lua52
 
       - name: Install Lua toolchain and dependencies
         run: make deps
 
-      - name: Verify
-        run: make verify
+      # Fail fast, same order as `make verify`: static checks before running
+      # any code, since a failure in one makes the next pointless.
+      - name: Format check
+        run: make format-check
+
+      - name: Lint
+        run: make lint
+
+      - name: Unit tests
+        run: make test
+
+  # The factestio integration suite (`make factestio` locally) against a real
+  # headless Factorio. Last in the chain: it only starts once `test` passes.
+  integration:
+    needs: test
+    runs-on: ubuntu-latest
+
+    env:
+      # Bump FACTORIO_VERSION alongside info.json's factorio_version; the doctor
+      # step fails on a mismatch.
+      FACTORIO_VERSION: "2.1.24"
+      FACTESTIO_VERSION: "v0.7.0"
+
+    defaults:
+      run:
+        # Explicit bash adds pipefail, so `| tee` keeps the suite's exit code.
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Install hererocks
+        run: pip install hererocks
+
+      - name: Install Lua toolchain and dependencies
+        run: make deps
+
+      # Homebrew is macOS-only, so take factestio straight from its release tag
+      # and install its rocks into the project toolchain.
+      - name: Install factestio
+        run: |
+          git clone --quiet --depth 1 --branch "$FACTESTIO_VERSION" \
+            https://github.com/cmtonkinson/factestio.git "$RUNNER_TEMP/factestio"
+          .hererocks/bin/luarocks install --only-deps "$RUNNER_TEMP"/factestio/factestio-*.rockspec
+          echo "$RUNNER_TEMP/factestio/bin" >> "$GITHUB_PATH"
+          echo "$PWD/.hererocks/bin" >> "$GITHUB_PATH"
+
+      # Headless builds need no login. Unpacked to ~/.factorio, the Linux
+      # default that factestio detects on its own.
+      - name: Install headless Factorio
+        run: |
+          curl -fsSL "https://factorio.com/get-download/${FACTORIO_VERSION}/headless/linux64" | tar -xJ -C "$HOME"
+          mv "$HOME/factorio" "$HOME/.factorio"
+          mkdir -p "$HOME/.factorio/mods"
+
+      - name: Doctor
+        run: factestio doctor
+
+      - name: Activate
+        run: factestio activate
+
+      - name: Integration tests
+        run: |
+          make factestio | tee "$RUNNER_TEMP/factestio.log"
+          # A run that discovers no scenarios also exits 0.
+          grep -qE '^Passed: [1-9]' "$RUNNER_TEMP/factestio.log"
