@@ -1,4 +1,4 @@
-.PHONY: clean deps factestio format format-check help lint major minor patch release test verify version-check
+.PHONY: clean deps factestio format format-check help lint release test verify version-check
 
 ROCKSPEC := $(lastword $(sort $(wildcard *.rockspec)))
 LUA_VERSION := $(shell cat .lua-version)
@@ -56,12 +56,8 @@ ifndef CI
 	$(MAKE) factestio
 endif
 
-release: ## Cut a release: make release <major|minor|patch>
-	scripts/release.sh --$(word 2,$(MAKECMDGOALS))
-
-# Bump levels are positional arguments to `release`; on their own they do nothing.
-major minor patch:
-	@:
+release: ## Cut a release at the newest changelog.txt version
+	scripts/release.sh
 
 help: ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-13s %s\n", $$1, $$2}'

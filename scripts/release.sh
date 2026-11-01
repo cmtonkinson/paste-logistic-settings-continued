@@ -2,7 +2,6 @@
 set -euo pipefail
 
 # Paths below are repo-relative.
-SCRIPT="$(basename "$0")"
 cd "$(dirname "$0")/.."
 
 NAME="paste-logistic-settings-continued"
@@ -20,22 +19,14 @@ RELEASE_FILES=(
 )
 OLD_VERSIONS="old-releases"
 
-case "${1:-}" in
---major | --minor | --patch) BUMP="${1#--}" ;;
-*)
-  echo "Usage: $SCRIPT --major|--minor|--patch" >&2
-  exit 1
-  ;;
-esac
-
+# The newest changelog entry names the release, so the version cannot drift from it.
+VERSION=$(sed -n 's/^Version: *//p' changelog.txt | head -1)
 LATEST=$(git tag --list 'v*' --sort=-version:refname | head -1)
-CURRENT="${LATEST#v}"
-IFS='.' read -r MAJOR MINOR PATCH <<<"${CURRENT:-0.0.0}"
-case "$BUMP" in
-major) VERSION="$((MAJOR + 1)).0.0" ;;
-minor) VERSION="${MAJOR}.$((MINOR + 1)).0" ;;
-patch) VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
-esac
+autoload -Uz is-at-least
+if [[ -z $VERSION ]] || { [[ -n $LATEST ]] && is-at-least "$VERSION" "${LATEST#v}"; }; then
+  echo "Newest changelog.txt entry (${VERSION:-none}) is not newer than ${LATEST:-none}. Exiting."
+  exit 4
+fi
 echo "Releasing v$VERSION (previous: ${LATEST:-none}) ..."
 
 # A leftover release directory means an earlier run failed; do not build on it.
@@ -52,11 +43,6 @@ fi
 if [[ $(git log origin/main..HEAD) ]]; then
   echo "There are unpushed commits. Exiting."
   exit 3
-fi
-
-if ! grep -q "Version: $VERSION" changelog.txt; then
-  echo "There is no entry in changelog.txt for $VERSION. Exiting."
-  exit 4
 fi
 
 # sed, not jq: jq would reformat info.json.
