@@ -1,4 +1,4 @@
-.PHONY: clean deps factestio format format-check lint test verify
+.PHONY: clean deps factestio format format-check help lint major minor patch release test verify
 
 ROCKSPEC := $(lastword $(sort $(wildcard *.rockspec)))
 LUA_VERSION := $(shell cat .lua-version)
@@ -14,37 +14,47 @@ LUAROCKS := $(LUA_BIN)/luarocks
 LUACHECK := $(LUA_BIN)/luacheck
 BUSTED := $(LUA_BIN)/busted
 
-clean:
+clean: ## Delete factestio results
 	rm -rf factestio_results/*
 
 $(LUAROCKS):
 	$(HEREROCKS) $(LUA_TREE) --lua $(LUA_VERSION) --luarocks latest --no-readline
 
-deps: $(LUAROCKS)
+deps: $(LUAROCKS) ## Build the local Lua toolchain and install dev dependencies
 	$(LUAROCKS) install --only-deps "$(ROCKSPEC)"
 	$(LUAROCKS) test --prepare "$(ROCKSPEC)"
 	@echo ""
 	@echo "Note: stylua must be installed separately:"
 	@echo "  brew install stylua"
 
-format:
+format: ## Rewrite files with stylua
 	stylua .
 
-format-check:
+format-check: ## Check formatting without rewriting
 	stylua --check .
 
-lint:
+lint: ## Run luacheck
 	$(LUACHECK) .
 
-test:
+test: ## Run unit tests
 	$(BUSTED) -o gtest
 
 # factestio is an external wrapper that resolves `lua` and `luarocks` from PATH
 # and requires Lua 5.2, so it needs the project toolchain ahead of the ambient one.
-factestio:
+factestio: ## Run the factestio integration suite against real Factorio
 	PATH="$(LUA_BIN):$$PATH" factestio --timeout $(FACTESTIO_TIMEOUT)
 
-verify: format-check lint test
+verify: format-check lint test ## Run format-check, lint, test, then factestio (skipped in CI)
 ifndef CI
 	$(MAKE) factestio
 endif
+
+release: ## Cut a release: make release <major|minor|patch>
+	scripts/release.sh --$(word 2,$(MAKECMDGOALS))
+
+# Bump levels are positional arguments to `release`; on their own they do nothing.
+major minor patch:
+	@:
+
+help: ## Show available targets
+	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-13s %s\n", $$1, $$2}'

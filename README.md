@@ -1,4 +1,4 @@
-*A lightweight Factorio 2.0 mod to save a few clicks when creating bot-operated
+*A lightweight Factorio 2.1 mod to save a few clicks when creating bot-operated
 crafting machines.*
 
 Read ./description.md for more information; this is meant to stay in sync with
