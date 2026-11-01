@@ -15,9 +15,10 @@ make deps
 
 Install `stylua` separately: `brew install stylua`.
 
-`make verify` runs format checking, linting, tests, then the `factestio`
-integration suite. When `CI` is set it skips `factestio`, which CI runs as its
-own `integration` job. `make format` rewrites files; `make help` lists targets.
+`make verify` runs the Factorio version check, format checking, linting, tests,
+then the `factestio` integration suite. When `CI` is set it skips `factestio`,
+which CI runs as its own `integration` job. `make format` rewrites files;
+`make help` lists targets.
 
 `make` targets call the toolchain by absolute path. To run the tools directly,
 put `.hererocks/bin/` first on `PATH`: `factestio` resolves `lua` from `PATH`

@@ -38,6 +38,9 @@ jobs:
         run: make deps
 
       # Same order as `make verify`: static checks before running any code.
+      - name: Factorio version check
+        run: make version-check
+
       - name: Format check
         run: make format-check
 
@@ -53,8 +56,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Bump FACTORIO_VERSION alongside info.json's factorio_version; the doctor
-      # step fails on a mismatch.
       FACTORIO_VERSION: "2.1.24"
       FACTESTIO_VERSION: "v0.7.0"
 

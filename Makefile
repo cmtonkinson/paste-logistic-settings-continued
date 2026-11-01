@@ -1,4 +1,4 @@
-.PHONY: clean deps factestio format format-check help lint major minor patch release test verify
+.PHONY: clean deps factestio format format-check help lint major minor patch release test verify version-check
 
 ROCKSPEC := $(lastword $(sort $(wildcard *.rockspec)))
 LUA_VERSION := $(shell cat .lua-version)
@@ -42,7 +42,16 @@ test: ## Run unit tests
 factestio: ## Run the factestio integration suite against real Factorio
 	PATH="$(LUA_BIN):$$PATH" factestio --timeout $(FACTESTIO_TIMEOUT)
 
-verify: format-check lint test ## Run format-check, lint, test, then factestio (skipped in CI)
+# info.json pins major.minor; CI pins the exact headless release under it.
+version-check: ## Check ci.yaml's FACTORIO_VERSION matches info.json's factorio_version
+	@info=$$(sed -n 's/.*"factorio_version": *"\([^"]*\)".*/\1/p' info.json); \
+	ci=$$(sed -n 's/.*FACTORIO_VERSION: *"\([^"]*\)".*/\1/p' .github/workflows/ci.yaml); \
+	case "$$ci" in "$$info".*) ;; *) \
+		echo "FACTORIO_VERSION '$$ci' in ci.yaml does not match factorio_version '$$info' in info.json" >&2; \
+		exit 1;; \
+	esac
+
+verify: version-check format-check lint test ## Run version-check, format-check, lint, test, then factestio (skipped in CI)
 ifndef CI
 	$(MAKE) factestio
 endif
