@@ -77,14 +77,14 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 7,
       }, function(player)
-        lib.paste_settings(context.game, player, cell.requester, data)
-        lib.paste_settings(context.game, player, cell.requester, data)
+        lib.paste_settings(player, cell.requester, data)
+        lib.paste_settings(player, cell.requester, data)
       end)
 
       local point = cell.requester.get_logistic_point(0)
@@ -101,13 +101,13 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 11,
       }, function(player)
-        lib.paste_settings(context.game, player, cell.buffer, data)
+        lib.paste_settings(player, cell.buffer, data)
       end)
 
       local point = cell.buffer.get_logistic_point(0)
@@ -133,13 +133,13 @@ return {
         min = 3,
       })
 
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 5,
       }, function(player)
-        lib.paste_settings(context.game, player, cell.requester, data)
+        lib.paste_settings(player, cell.requester, data)
       end)
 
       local kept_section = point.sections[1]
@@ -171,8 +171,8 @@ return {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 6,
       }, function(player)
-        lib.paste_settings(context.game, player, requester, data)
-        lib.paste_settings(context.game, player, requester, data)
+        lib.paste_settings(player, requester, data)
+        lib.paste_settings(player, requester, data)
       end)
 
       local point = requester.get_logistic_point(0)
@@ -190,14 +190,14 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-output-limit-type"] = "stacks",
         ["paste-logistic-settings-continued-output-limit"] = 1,
       }, function(player)
-        lib.paste_settings(context.game, player, cell.output_inserter, data)
-        lib.paste_settings(context.game, player, cell.output_inserter, data)
+        lib.paste_settings(player, cell.output_inserter, data)
+        lib.paste_settings(player, cell.output_inserter, data)
       end)
 
       local condition = cell.output_inserter.get_or_create_control_behavior().logistic_condition
@@ -210,15 +210,15 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-output-limit-type"] = "stacks",
         ["paste-logistic-settings-continued-output-limit"] = 1,
         ["paste-logistic-settings-continued-accumulate-inserter-output-limit"] = false,
       }, function(player)
-        lib.paste_settings(context.game, player, cell.output_inserter, data)
-        lib.paste_settings(context.game, player, cell.output_inserter, data)
+        lib.paste_settings(player, cell.output_inserter, data)
+        lib.paste_settings(player, cell.output_inserter, data)
       end)
 
       local condition = cell.output_inserter.get_or_create_control_behavior().logistic_condition

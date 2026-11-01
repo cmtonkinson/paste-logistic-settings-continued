@@ -95,7 +95,7 @@ local function create_empty_transport_belt_machine(surface, position)
 end
 
 local function normalize_expected_inserter(name)
-  if name == "stack-inserter" then
+  if name == "stack-inserter" and not prototypes.entity[name] then
     return "bulk-inserter"
   end
   return name
@@ -104,7 +104,7 @@ end
 local function run_autoplace(f, context, position, overrides)
   local surface = context.game.surfaces[1]
   local machine = create_empty_transport_belt_machine(surface, position)
-  local data = lib.copy_settings(context.game, { index = 1 }, machine)
+  local data = lib.copy_settings({ index = 1 }, machine)
   local settings = {
     ["paste-logistic-settings-continued-enable-ghost-placement"] = true,
     ["paste-logistic-settings-continued-ghost-direction"] = "south",
@@ -122,7 +122,7 @@ local function run_autoplace(f, context, position, overrides)
   end
 
   f:with_player_settings(context.player, settings, function(player)
-    lib.autoconfigure_settings(context.game, player, machine, data)
+    lib.autoconfigure_settings(player, machine, data)
   end)
 
   return surface, machine, data
@@ -196,7 +196,7 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-output-limit-type"] = "items",
@@ -204,7 +204,7 @@ return {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 5,
       }, function(player)
-        lib.autoconfigure_settings(context.game, player, cell.machine, data)
+        lib.autoconfigure_settings(player, cell.machine, data)
       end)
 
       local output_behavior = cell.output_inserter.get_or_create_control_behavior()
@@ -367,7 +367,7 @@ return {
             position = { x = position.x, y = position.y + 3 },
             force = "player",
           })
-          local data = lib.copy_settings(context.game, { index = 1 }, machine)
+          local data = lib.copy_settings({ index = 1 }, machine)
 
           f:with_player_settings(context.player, {
             ["paste-logistic-settings-continued-enable-ghost-placement"] = true,
@@ -380,7 +380,7 @@ return {
             ["paste-logistic-settings-continued-request-size-type"] = "items",
             ["paste-logistic-settings-continued-request-size"] = 5,
           }, function(player)
-            lib.autoconfigure_settings(context.game, player, machine, data)
+            lib.autoconfigure_settings(player, machine, data)
           end)
 
           f:expect(output_chest.storage_filter.name, prototypes.item["transport-belt"])

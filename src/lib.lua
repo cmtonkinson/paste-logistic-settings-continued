@@ -37,8 +37,9 @@ local function get_opposite_direction(direction)
   return opposites[direction]
 end
 
+-- The stack inserter needs Space Age; without it, fall back to the bulk inserter.
 local function normalize_inserter_name(name)
-  if name == "stack-inserter" then
+  if name == "stack-inserter" and not prototypes.entity[name] then
     return "bulk-inserter"
   end
   return name
@@ -204,8 +205,8 @@ function lib.find_placement_entity(surface, force, spec)
   return nil, has_occupant
 end
 
-local function create_requester_ghost_from_blueprint(game, surface, force, spec, player, data)
-  if not game or not game.create_inventory or not player then
+local function create_requester_ghost_from_blueprint(surface, force, spec, player, data)
+  if not game.create_inventory or not player then
     return nil
   end
 
@@ -235,15 +236,7 @@ local function create_requester_ghost_from_blueprint(game, surface, force, spec,
                       index = index,
                       name = ingredient.name,
                       quality = helpers.get_quality_string(data.quality),
-                      count = helpers.get_limit(
-                        prototype,
-                        get_player_setting_value(
-                          player,
-                          "paste-logistic-settings-continued-request-size-type",
-                          "stacks"
-                        ),
-                        get_player_setting_value(player, "paste-logistic-settings-continued-request-size", 1)
-                      ),
+                      count = helpers.get_request_quota(player, prototype),
                       comparator = "=",
                     }
                   end
@@ -294,9 +287,9 @@ local function create_requester_ghost_from_blueprint(game, surface, force, spec,
   return nil
 end
 
-function lib.create_ghost_entity(game, surface, force, spec, player, data)
+function lib.create_ghost_entity(surface, force, spec, player, data)
   if spec.role == "input_chest" then
-    local requester = create_requester_ghost_from_blueprint(game, surface, force, spec, player, data)
+    local requester = create_requester_ghost_from_blueprint(surface, force, spec, player, data)
     if requester then
       return requester
     end
@@ -321,23 +314,23 @@ function lib.create_ghost_entity(game, surface, force, spec, player, data)
   return entity
 end
 
-local function configure_placement_entity(game, player, entity, spec, data)
+local function configure_placement_entity(player, entity, spec, data)
   if not entity then
     return
   end
   local view = EntityView.resolve(entity)
   if spec.role == "input_chest" then
     if not view.is_ghost then
-      lib.paste_settings(game, player, entity, data)
+      lib.paste_settings(player, entity, data)
     end
     return
   end
   if spec.role == "output_inserter" or spec.role == "output_chest" then
-    lib.paste_settings(game, player, entity, data)
+    lib.paste_settings(player, entity, data)
   end
 end
 
-function lib.ensure_ghost_layout(game, player, target, data)
+function lib.ensure_ghost_layout(player, target, data)
   local placement_settings = get_ghost_placement_settings(player)
   if not placement_settings.enabled then
     return {}
@@ -349,13 +342,13 @@ function lib.ensure_ghost_layout(game, player, target, data)
   for _, spec in ipairs(specs) do
     local entity, has_occupant = lib.find_placement_entity(target.surface, target.force, spec)
     if not entity and not has_occupant then
-      entity = lib.create_ghost_entity(game, target.surface, target.force, spec, player, data)
+      entity = lib.create_ghost_entity(target.surface, target.force, spec, player, data)
     end
     if entity then
       if spec.role ~= "input_chest" or EntityView.resolve(entity).is_ghost then
         processed[entity] = true
       end
-      configure_placement_entity(game, player, entity, spec, data)
+      configure_placement_entity(player, entity, spec, data)
     end
   end
 
@@ -423,26 +416,26 @@ function lib.show_output_limit_text(player, inserter_view, data, result)
 end
 
 -----------------------------------------------------------------------------
-function lib.apply_inserter_settings(game, player, inserter, data)
+function lib.apply_inserter_settings(player, inserter, data)
   local view = EntityView.resolve(inserter)
-  local result = view:apply_inserter_settings(game, player, data)
+  local result = view:apply_inserter_settings(player, data)
   lib.show_output_limit_text(player, view, data, result)
   return result
 end
 
 -----------------------------------------------------------------------------
-function lib.apply_chest_settings(game, player, entity, data)
+function lib.apply_chest_settings(player, entity, data)
   local view = EntityView.resolve(entity)
   if view:is_storage_chest() then
-    view:apply_storage_settings(game, player, data)
+    view:apply_storage_settings(player, data)
   elseif view:is_requester_chest() then
-    view:apply_requester_settings(game, player, data)
+    view:apply_requester_settings(player, data)
   end
 end
 
 -----------------------------------------------------------------------------
 -- Returns the recipe data to paste, or nil when the entity has no recipe.
-function lib.copy_settings(game, player, entity)
+function lib.copy_settings(player, entity)
   local view = EntityView.resolve(entity)
   local data = {}
   local recipe, quality = view:get_recipe()
@@ -491,28 +484,32 @@ function lib.copy_settings(game, player, entity)
 end
 
 -----------------------------------------------------------------------------
-function lib.paste_settings(game, player, target, data)
+function lib.paste_settings(player, target, data)
   local view = EntityView.resolve(target)
   if view:is_logistic_container() then
-    lib.apply_chest_settings(game, player, target, data)
+    lib.apply_chest_settings(player, target, data)
   elseif view:is_inserter() then
-    lib.apply_inserter_settings(game, player, target, data)
+    lib.apply_inserter_settings(player, target, data)
   end
 end
 
 -----------------------------------------------------------------------------
 -- Pastes onto the inserters around a crafting machine and the chests they feed
 -- or draw from.
-function lib.autoconfigure_settings(game, player, target, data)
+function lib.autoconfigure_settings(player, target, data)
   local target_view = EntityView.resolve(target)
   -- The target is a crafting machine, so it must pass the source check.
   if not target_view:is_valid_source() then
     return
   end
-  local processed = lib.ensure_ghost_layout(game, player, target, data)
+  local processed = lib.ensure_ghost_layout(player, target, data)
+  -- Reach a long-handed inserter two tiles out from any side of the machine.
+  local prototype = target_view:get_prototype()
+  local radius = prototype and math.max(get_tile_span(prototype, "x"), get_tile_span(prototype, "y")) / 2 + 2.5 or 4
   local nearby_inserters = target.surface.find_entities_filtered({
-    area = helpers.get_area(game, target, 4),
+    area = helpers.get_area(target, radius),
     force = target.force,
+    type = { "inserter", "entity-ghost" },
   })
 
   for _, candidate in ipairs(nearby_inserters) do
@@ -523,17 +520,17 @@ function lib.autoconfigure_settings(game, player, target, data)
       -- Output inserter dropping into a storage chest.
       if pt and pt.valid and pt == target and EntityView.resolve(dt):is_storage_chest() then
         if not processed[candidate] then
-          lib.paste_settings(game, player, candidate, data)
+          lib.paste_settings(player, candidate, data)
           processed[candidate] = true
         end
         if dt and not processed[dt] then
-          lib.paste_settings(game, player, dt, data)
+          lib.paste_settings(player, dt, data)
           processed[dt] = true
         end
       -- Input inserter pulling from a requester chest.
       elseif dt and dt.valid and dt == target and EntityView.resolve(pt):is_requester_chest() then
         if pt and not processed[pt] then
-          lib.paste_settings(game, player, pt, data)
+          lib.paste_settings(player, pt, data)
           processed[pt] = true
         end
       end

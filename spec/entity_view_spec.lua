@@ -51,43 +51,6 @@ describe("entity_view", function()
     assert.is_true(view:is_storage_chest())
   end)
 
-  it("matches effective names across built and ghost entities", function()
-    local built = {
-      valid = true,
-      name = "assembling-machine-2",
-      type = "assembling-machine",
-      prototype = {},
-    }
-    local ghost = {
-      valid = true,
-      name = "entity-ghost",
-      type = "entity-ghost",
-      prototype = {},
-      ghost_name = "assembling-machine-2",
-      ghost_type = "assembling-machine",
-      ghost_prototype = {},
-    }
-
-    assert.is_true(EntityView.resolve(built):same_effective_name(ghost))
-  end)
-
-  it("compares raw entities without treating them like resolved views", function()
-    local source = {
-      valid = true,
-      name = "assembling-machine-3",
-      type = "assembling-machine",
-      prototype = {},
-    }
-    local target = {
-      valid = true,
-      name = "assembling-machine-3",
-      type = "assembling-machine",
-      prototype = {},
-    }
-
-    assert.is_true(EntityView.resolve(target):same_effective_name(source))
-  end)
-
   it("treats ghost crafting machines as valid sources when get_recipe works", function()
     local ghost = {
       valid = true,
@@ -104,7 +67,6 @@ describe("entity_view", function()
 
     local view = EntityView.resolve(ghost)
 
-    assert.is_true(view:is_crafting_machine())
     assert.is_true(view:is_valid_source())
   end)
 
@@ -123,7 +85,7 @@ describe("entity_view", function()
       end,
     }
 
-    local result = EntityView.resolve(ghost):apply_inserter_settings(nil, { index = 1 }, {
+    local result = EntityView.resolve(ghost):apply_inserter_settings({ index = 1 }, {
       item = true,
       name = "transport-belt",
       quality = 2,

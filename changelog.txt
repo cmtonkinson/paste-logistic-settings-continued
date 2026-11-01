@@ -3,6 +3,13 @@ Version: 1.6.0
 Date: 2026.11.01
   Changes:
     - Update for Factorio 2.1
+    - Remove the obsolete 1.3.0 settings warning
+  Fixes:
+    - Autoconfigure doing nothing after the copied machine is removed or its ghost is built
+    - The stack inserter ghost setting placing a bulk inserter when Space Age is enabled
+    - Inserter limits accumulating across different qualities of the same item
+    - Autoconfigure missing inserters around machines larger than 3x3
+    - Pasting a fluid-only recipe adding an empty request group to requester chests
 
 ---------------------------------------------------------------------------------------------------
 Version: 1.5.0

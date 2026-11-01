@@ -99,7 +99,7 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
       local ingredients = ingredient_map(data.ingredients)
 
       f:expect(data.item, true)
@@ -114,9 +114,9 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
-      lib.paste_settings(context.game, { index = 1 }, cell.storage, data)
+      lib.paste_settings({ index = 1 }, cell.storage, data)
 
       f:expect(cell.storage.storage_filter.name, prototypes.item["transport-belt"])
     end,
@@ -126,13 +126,13 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 7,
       }, function(player)
-        lib.paste_settings(context.game, player, cell.requester, data)
+        lib.paste_settings(player, cell.requester, data)
       end)
 
       local point = cell.requester.get_logistic_point(0)
@@ -150,13 +150,13 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = transport_belt_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.machine)
+      local data = lib.copy_settings({ index = 1 }, cell.machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-output-limit-type"] = "items",
         ["paste-logistic-settings-continued-output-limit"] = 13,
       }, function(player)
-        lib.paste_settings(context.game, player, cell.output_inserter, data)
+        lib.paste_settings(player, cell.output_inserter, data)
       end)
 
       local behavior = cell.output_inserter.get_or_create_control_behavior()

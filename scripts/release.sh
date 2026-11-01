@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 
 # Paths below are repo-relative.
 SCRIPT="$(basename "$0")"

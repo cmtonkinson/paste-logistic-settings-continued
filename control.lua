@@ -16,7 +16,7 @@ script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
   local player = game.players[event.player_index]
   local target = player.selected
   local target_view = EntityView.resolve(target)
-  if helpers.is_holding_anything(game, player, event) then
+  if helpers.is_holding_anything(player) then
     return
   end
   if not target_view:is_valid_source() then
@@ -24,7 +24,7 @@ script.on_event(EVENT_NAMESPACE .. "-copy", function(event)
   end
 
   storage.paste_data = storage.paste_data or {}
-  storage.paste_data[event.player_index] = lib.copy_settings(game, player, target)
+  storage.paste_data[event.player_index] = lib.copy_settings(player, target)
 end)
 
 -----------------------------------------------------------------------------
@@ -36,10 +36,7 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   if not target or not target.valid then
     return
   end
-  if helpers.is_holding_anything(game, player, event) then
-    return
-  end
-  if not target or not target.valid then
+  if helpers.is_holding_anything(player) then
     return
   end
   if not target_view:is_valid_target() then
@@ -53,31 +50,17 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
   end
 
   -- Pasting onto any entity with the source's name autoconfigures it, so one
-  -- copy can configure many crafting machines.
-  if target_view:same_effective_name(data.source) then
-    lib.autoconfigure_settings(game, player, target, data)
+  -- copy can configure many crafting machines. Compare the saved name: the
+  -- source entity may be gone, e.g. a ghost the bots have since built.
+  if target_view:get_name() == data.source_name then
+    lib.autoconfigure_settings(player, target, data)
   else
-    lib.paste_settings(game, player, target, data)
+    lib.paste_settings(player, target, data)
   end
 end)
 
 -----------------------------------------------------------------------------
 -- Migrations
-script.on_configuration_changed(function(data)
+script.on_configuration_changed(function()
   storage.paste_data = storage.paste_data or {}
-
-  -- Migrations to 1.3.0
-  for _, player in pairs(game.players) do
-    local ps = settings.get_player_settings(player)
-
-    local output_limit = ps["paste-logistic-settings-continued-output-limit"]
-    local request_size = ps["paste-logistic-settings-continued-request-size"]
-
-    if output_limit and output_limit.value < 1 then
-      player.print({ "msg.paste-logistic-settings-continued-output-limit-migration" })
-    end
-    if request_size and request_size.value < 1 then
-      player.print({ "msg.paste-logistic-settings-continued-request-size-migration" })
-    end
-  end
 end)

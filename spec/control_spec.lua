@@ -70,7 +70,7 @@ describe("control", function()
     }
     _G.storage = {
       paste_data = {
-        [1] = { source = source },
+        [1] = { source = source, source_name = "assembling-machine-2" },
       },
     }
 
@@ -122,8 +122,8 @@ describe("control", function()
         is_valid_target = function()
           return false
         end,
-        same_effective_name = function()
-          return false
+        get_name = function()
+          return "storage-chest"
         end,
       }
     end
@@ -145,12 +145,6 @@ describe("control", function()
 
   it("configuration_changed backfills paste_data when upgrading from a save without it", function()
     _G.storage = {}
-    _G.settings = {
-      get_player_settings = function()
-        return {}
-      end,
-    }
-    _G.game = { players = {} }
 
     harness.load_control()
     harness.handlers.configuration_changed({})
@@ -158,32 +152,22 @@ describe("control", function()
     assert.same({}, storage.paste_data)
   end)
 
-  it("migration handler prints warnings for low legacy settings", function()
-    local messages = {}
+  it("paste handler autoconfigures after the copied source entity is gone", function()
+    local target = { valid = true, name = "assembling-machine-2" }
     _G.game = {
       players = {
-        {
-          print = function(message)
-            table.insert(messages, message)
-          end,
-        },
+        [1] = { selected = target },
       },
     }
-    _G.settings = {
-      get_player_settings = function()
-        return {
-          ["paste-logistic-settings-continued-output-limit"] = { value = 0 },
-          ["paste-logistic-settings-continued-request-size"] = { value = 0 },
-        }
-      end,
+    _G.storage = {
+      paste_data = {
+        [1] = { source = { valid = false }, source_name = "assembling-machine-2" },
+      },
     }
 
     harness.load_control()
-    harness.handlers.configuration_changed({})
+    harness.handlers["paste-logistic-settings-continued-paste"]({ player_index = 1 })
 
-    assert.same({
-      { "msg.paste-logistic-settings-continued-output-limit-migration" },
-      { "msg.paste-logistic-settings-continued-request-size-migration" },
-    }, messages)
+    assert.equal("autoconfigure", harness.lib_calls[1].kind)
   end)
 end)

@@ -50,7 +50,7 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = fluid_recipe_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.plant)
+      local data = lib.copy_settings({ index = 1 }, cell.plant)
       local ingredients = ingredient_map(data.ingredients)
 
       f:expect(data.item == nil, true)
@@ -65,9 +65,9 @@ return {
     from = "setup",
     test = function(f, context)
       local cell = fluid_recipe_cell(context.game.surfaces[1])
-      local data = lib.copy_settings(context.game, { index = 1 }, cell.plant)
+      local data = lib.copy_settings({ index = 1 }, cell.plant)
 
-      lib.paste_settings(context.game, { index = 1 }, cell.storage, data)
+      lib.paste_settings({ index = 1 }, cell.storage, data)
 
       f:expect(cell.storage.storage_filter == nil, true)
     end,

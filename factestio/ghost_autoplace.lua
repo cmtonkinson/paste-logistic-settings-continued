@@ -76,7 +76,7 @@ return {
     test = function(f, context)
       local surface = context.game.surfaces[1]
       local machine = create_empty_transport_belt_machine(surface, { x = 40.5, y = 0.5 })
-      local data = lib.copy_settings(context.game, { index = 1 }, machine)
+      local data = lib.copy_settings({ index = 1 }, machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-enable-ghost-placement"] = true,
@@ -89,7 +89,7 @@ return {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 5,
       }, function(player)
-        lib.autoconfigure_settings(context.game, player, machine, data)
+        lib.autoconfigure_settings(player, machine, data)
       end)
 
       local south_face_area = {
@@ -129,7 +129,7 @@ return {
         position = { x = 49.5, y = 3.5 },
         force = "player",
       })
-      local data = lib.copy_settings(context.game, { index = 1 }, machine)
+      local data = lib.copy_settings({ index = 1 }, machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-enable-ghost-placement"] = true,
@@ -142,7 +142,7 @@ return {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 5,
       }, function(player)
-        lib.autoconfigure_settings(context.game, player, machine, data)
+        lib.autoconfigure_settings(player, machine, data)
       end)
 
       local south_face_area = {
@@ -176,7 +176,7 @@ return {
         position = { x = 59.5, y = 3.5 },
         force = "player",
       })
-      local data = lib.copy_settings(context.game, { index = 1 }, machine)
+      local data = lib.copy_settings({ index = 1 }, machine)
 
       f:with_player_settings(context.player, {
         ["paste-logistic-settings-continued-enable-ghost-placement"] = true,
@@ -189,7 +189,7 @@ return {
         ["paste-logistic-settings-continued-request-size-type"] = "items",
         ["paste-logistic-settings-continued-request-size"] = 5,
       }, function(player)
-        lib.autoconfigure_settings(context.game, player, machine, data)
+        lib.autoconfigure_settings(player, machine, data)
       end)
 
       local south_face_area = {

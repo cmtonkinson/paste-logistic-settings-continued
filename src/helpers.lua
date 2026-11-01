@@ -12,7 +12,17 @@ function helpers.get_limit(prototype, limit_type, limit)
 end
 
 -----------------------------------------------------------------------------
-function helpers.get_area(game, entity, distance)
+function helpers.get_request_quota(player, prototype)
+  local player_settings = settings.get_player_settings(player.index)
+  return helpers.get_limit(
+    prototype,
+    player_settings["paste-logistic-settings-continued-request-size-type"].value,
+    player_settings["paste-logistic-settings-continued-request-size"].value
+  )
+end
+
+-----------------------------------------------------------------------------
+function helpers.get_area(entity, distance)
   if not (entity and entity.valid) then
     return nil
   end
@@ -107,7 +117,7 @@ end
 -----------------------------------------------------------------------------
 -- The hotkeys share super force build's modifiers, so they do nothing while the
 -- cursor holds anything.
-function helpers.is_holding_anything(game, player, event)
+function helpers.is_holding_anything(player)
   if not player.is_cursor_empty() then
     return true
   end

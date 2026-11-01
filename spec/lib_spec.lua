@@ -20,7 +20,7 @@ describe("lib", function()
       end,
     }
 
-    lib.apply_inserter_settings(nil, { index = 1 }, inserter, {
+    lib.apply_inserter_settings({ index = 1 }, inserter, {
       item = true,
       name = "transport-belt",
       quality = 2,
@@ -38,7 +38,7 @@ describe("lib", function()
     local behavior = {
       logistic_condition = {
         comparator = "<",
-        first_signal = { name = "transport-belt" },
+        first_signal = { name = "transport-belt", quality = "uncommon" },
         constant = 9,
       },
     }
@@ -48,13 +48,37 @@ describe("lib", function()
       end,
     }
 
-    lib.apply_inserter_settings(nil, { index = 1 }, inserter, {
+    lib.apply_inserter_settings({ index = 1 }, inserter, {
       item = true,
       name = "transport-belt",
       quality = 1,
     })
 
     assert.equal(22, behavior.logistic_condition.constant)
+  end)
+
+  it("apply_inserter_settings does not accumulate a limit of another quality", function()
+    local behavior = {
+      logistic_condition = {
+        comparator = "<",
+        first_signal = { name = "transport-belt", quality = "rare" },
+        constant = 9,
+      },
+    }
+    local inserter = {
+      get_or_create_control_behavior = function()
+        return behavior
+      end,
+    }
+
+    lib.apply_inserter_settings({ index = 1 }, inserter, {
+      item = true,
+      name = "transport-belt",
+      quality = 0,
+    })
+
+    assert.equal(13, behavior.logistic_condition.constant)
+    assert.equal("normal", behavior.logistic_condition.first_signal.quality)
   end)
 
   it("apply_inserter_settings replaces matching existing limits when accumulation is disabled", function()
@@ -79,7 +103,7 @@ describe("lib", function()
       end,
     }
 
-    lib.apply_inserter_settings(nil, { index = 1 }, inserter, {
+    lib.apply_inserter_settings({ index = 1 }, inserter, {
       item = true,
       name = "transport-belt",
       quality = 1,
@@ -136,7 +160,7 @@ describe("lib", function()
       inserter = inserter,
       player = player,
       paste = function()
-        lib.apply_inserter_settings(nil, player, inserter, {
+        lib.apply_inserter_settings(player, inserter, {
           item = true,
           name = "transport-belt",
           quality = 0,
@@ -280,10 +304,10 @@ describe("lib", function()
       end,
     }
 
-    lib.apply_inserter_settings(nil, { index = 1 }, inserter, {
+    lib.apply_inserter_settings({ index = 1 }, inserter, {
       item = true,
       name = "transport-belt",
-      quality = 1,
+      quality = 0,
     })
 
     assert.equal(22, behavior.logistic_condition.constant)
@@ -303,7 +327,7 @@ describe("lib", function()
       end,
     }
 
-    lib.apply_inserter_settings(nil, { index = 1 }, inserter, {
+    lib.apply_inserter_settings({ index = 1 }, inserter, {
       item = true,
       name = "transport-belt",
       quality = 1,
@@ -320,13 +344,13 @@ describe("lib", function()
       end,
     }
 
-    lib.apply_inserter_settings(nil, { index = 1 }, inserter, nil)
+    lib.apply_inserter_settings({ index = 1 }, inserter, nil)
     assert.is_nil(behavior.logistic_condition)
 
-    lib.apply_inserter_settings(nil, { index = 1 }, inserter, { item = false, name = "water" })
+    lib.apply_inserter_settings({ index = 1 }, inserter, { item = false, name = "water" })
     assert.is_nil(behavior.logistic_condition)
 
-    lib.apply_inserter_settings(nil, { index = 1 }, inserter, { item = true, name = "water" })
+    lib.apply_inserter_settings({ index = 1 }, inserter, { item = true, name = "water" })
     assert.is_nil(behavior.logistic_condition)
   end)
 
@@ -422,11 +446,11 @@ describe("lib", function()
       ["paste-logistic-settings-continued-ghost-output-chest"] = { value = "storage-chest" },
     })
 
-    lib.paste_settings = function(_, _, entity)
+    lib.paste_settings = function(_, entity)
       table.insert(calls, entity)
     end
 
-    local processed = lib.ensure_ghost_layout(nil, player, machine, { item = true, name = "transport-belt" })
+    local processed = lib.ensure_ghost_layout(player, machine, { item = true, name = "transport-belt" })
 
     lib.paste_settings = original_paste_settings
 
@@ -507,11 +531,11 @@ describe("lib", function()
       ["paste-logistic-settings-continued-ghost-output-chest"] = { value = "storage-chest" },
     })
 
-    lib.paste_settings = function(_, _, entity)
+    lib.paste_settings = function(_, entity)
       table.insert(calls, entity)
     end
 
-    lib.ensure_ghost_layout(nil, player, machine, { item = true, name = "transport-belt" })
+    lib.ensure_ghost_layout(player, machine, { item = true, name = "transport-belt" })
 
     lib.paste_settings = original_paste_settings
 
@@ -549,8 +573,8 @@ describe("lib", function()
       },
     }
 
-    lib.apply_chest_settings(nil, { index = 1 }, storage, data)
-    lib.apply_chest_settings(nil, { index = 1 }, requester, data)
+    lib.apply_chest_settings({ index = 1 }, storage, data)
+    lib.apply_chest_settings({ index = 1 }, requester, data)
 
     assert.same({ name = "transport-belt", quality = "uncommon" }, storage.storage_filter)
     assert.equal("iron-plate", requester_section.filters[1].value.name)
@@ -581,8 +605,8 @@ describe("lib", function()
       prototype = { logistic_mode = "storage" },
     }
 
-    lib.apply_chest_settings(nil, { index = 1 }, storage, { item = false, name = "water" })
-    lib.apply_chest_settings(nil, { index = 1 }, requester, {
+    lib.apply_chest_settings({ index = 1 }, storage, { item = false, name = "water" })
+    lib.apply_chest_settings({ index = 1 }, requester, {
       item = false,
       ingredients = {
         { name = "water" },
@@ -591,6 +615,30 @@ describe("lib", function()
 
     assert.is_nil(storage.storage_filter)
     assert.same({}, requester_section.filters)
+  end)
+
+  it("apply_chest_settings adds no request group for a fluid-only recipe", function()
+    local added = 0
+    local existing = Support.make_section("", { { value = { name = "iron-plate" } } })
+    local requester = {
+      valid = true,
+      type = "logistic-container",
+      prototype = { logistic_mode = "requester" },
+      get_logistic_point = function()
+        return {
+          sections_count = 1,
+          sections = { existing },
+          add_section = function()
+            added = added + 1
+            return Support.make_section("", {})
+          end,
+        }
+      end,
+    }
+
+    lib.apply_chest_settings({ index = 1 }, requester, { ingredients = { { name = "light-oil" } } })
+
+    assert.equal(0, added)
   end)
 
   it("paste_settings dispatches by target type", function()
@@ -612,16 +660,16 @@ describe("lib", function()
       ghost_prototype = {},
     }
 
-    lib.apply_chest_settings = function(_, _, target)
+    lib.apply_chest_settings = function(_, target)
       table.insert(calls, { kind = "chest", target = target })
     end
-    lib.apply_inserter_settings = function(_, _, target)
+    lib.apply_inserter_settings = function(_, target)
       table.insert(calls, { kind = "inserter", target = target })
     end
 
-    lib.paste_settings(nil, nil, chest_target, {})
-    lib.paste_settings(nil, nil, inserter_target, {})
-    lib.paste_settings(nil, nil, { type = "lamp" }, {})
+    lib.paste_settings(nil, chest_target, {})
+    lib.paste_settings(nil, inserter_target, {})
+    lib.paste_settings(nil, { type = "lamp" }, {})
 
     lib.apply_chest_settings = original_apply_chest_settings
     lib.apply_inserter_settings = original_apply_inserter_settings
@@ -672,15 +720,69 @@ describe("lib", function()
       return { input_inserter, output_inserter, unrelated_inserter }
     end
 
-    lib.paste_settings = function(_, _, entity)
+    lib.paste_settings = function(_, entity)
       table.insert(calls, entity)
     end
 
-    lib.autoconfigure_settings(nil, { index = 1 }, target, { item = true, name = "transport-belt" })
+    lib.autoconfigure_settings({ index = 1 }, target, { item = true, name = "transport-belt" })
 
     lib.paste_settings = original_paste_settings
 
     assert.same({ requester, output_inserter, storage }, calls)
+  end)
+
+  it("autoconfigure_settings searches further around larger machines, for inserters only", function()
+    local searched
+    local target = {
+      valid = true,
+      force = "player",
+      position = { x = 0, y = 0 },
+      prototype = { tile_width = 9, tile_height = 9 },
+      get_recipe = function()
+        return { name = "transport-belt" }
+      end,
+      surface = {
+        find_entities_filtered = function(params)
+          searched = params
+          return {}
+        end,
+      },
+    }
+
+    lib.autoconfigure_settings({ index = 1 }, target, { item = true, name = "transport-belt" })
+
+    assert.same({ { -7, -7 }, { 7, 7 } }, searched.area)
+    assert.same({ "inserter", "entity-ghost" }, searched.type)
+  end)
+
+  it("ensure_ghost_layout places a stack inserter when the game defines one", function()
+    local created = {}
+    _G.prototypes.entity["stack-inserter"] = {}
+    _G.settings = Support.make_settings({
+      ["paste-logistic-settings-continued-enable-ghost-placement"] = { value = true },
+      ["paste-logistic-settings-continued-ghost-direction"] = { value = "south" },
+      ["paste-logistic-settings-continued-ghost-input-inserter"] = { value = "stack-inserter" },
+      ["paste-logistic-settings-continued-ghost-output-inserter"] = { value = "fast-inserter" },
+      ["paste-logistic-settings-continued-ghost-output-chest"] = { value = "storage-chest" },
+    })
+    local machine = {
+      valid = true,
+      position = { x = 0.5, y = 0.5 },
+      force = "player",
+      prototype = { tile_width = 3, tile_height = 3 },
+      surface = {
+        find_entities_filtered = function()
+          return {}
+        end,
+        create_entity = function(params)
+          table.insert(created, params.inner_name)
+        end,
+      },
+    }
+
+    lib.ensure_ghost_layout({ index = 1 }, machine, { item = true, name = "transport-belt" })
+
+    assert.equal("stack-inserter", created[2])
   end)
 
   it("autoconfigure_settings includes ghost inserters and ghost storage targets", function()
@@ -712,11 +814,11 @@ describe("lib", function()
       return { ghost_output_inserter }
     end
 
-    lib.paste_settings = function(_, _, entity)
+    lib.paste_settings = function(_, entity)
       table.insert(calls, entity)
     end
 
-    lib.autoconfigure_settings(nil, { index = 1 }, target, { item = true, name = "transport-belt" })
+    lib.autoconfigure_settings({ index = 1 }, target, { item = true, name = "transport-belt" })
 
     lib.paste_settings = original_paste_settings
 
@@ -747,7 +849,7 @@ describe("lib", function()
         destroyed = true
       end,
     }
-    local game = {
+    _G.game = {
       create_inventory = function()
         return inventory
       end,
@@ -758,7 +860,7 @@ describe("lib", function()
       end,
     }
 
-    local entity = lib.create_ghost_entity(game, surface, "player", {
+    local entity = lib.create_ghost_entity(surface, "player", {
       role = "input_chest",
       name = "requester-chest",
       position = { x = 1, y = 2 },
@@ -777,7 +879,7 @@ describe("lib", function()
 
   it("falls back to a plain ghost when the blueprint route fails", function()
     local created
-    local game = {
+    _G.game = {
       create_inventory = function()
         return nil
       end,
@@ -789,7 +891,7 @@ describe("lib", function()
       end,
     }
 
-    lib.create_ghost_entity(game, surface, "player", {
+    lib.create_ghost_entity(surface, "player", {
       role = "input_chest",
       name = "requester-chest",
       position = { x = 1, y = 2 },
@@ -823,9 +925,9 @@ describe("lib", function()
       end,
     }
 
-    assert.is_nil(lib.copy_settings(nil, nil, no_recipe_entity))
+    assert.is_nil(lib.copy_settings(nil, no_recipe_entity))
 
-    local copied = lib.copy_settings(nil, nil, recipe_entity)
+    local copied = lib.copy_settings(nil, recipe_entity)
     assert.is_true(copied.item)
     assert.is_nil(copied.source_name)
     assert.is_nil(copied.source_type)
@@ -857,7 +959,7 @@ describe("lib", function()
       end,
     }
 
-    local copied = lib.copy_settings(nil, nil, ghost_entity)
+    local copied = lib.copy_settings(nil, ghost_entity)
 
     assert.equal("assembling-machine-2", copied.source_name)
     assert.equal("assembling-machine", copied.source_type)

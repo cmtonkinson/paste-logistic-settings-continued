@@ -4,13 +4,6 @@ local EntityView = {}
 
 local ViewMethods = {}
 
-local function with_view(entity_or_view)
-  if type(entity_or_view) == "table" and getmetatable(entity_or_view) == EntityView.metatable then
-    return entity_or_view
-  end
-  return EntityView.resolve(entity_or_view)
-end
-
 local function item_ingredients_only(ingredients)
   local filtered = {}
   for _, ingredient in ipairs(ingredients or {}) do
@@ -155,11 +148,6 @@ function ViewMethods:is_inserter()
   return self:get_type() == "inserter"
 end
 
-function ViewMethods:same_effective_name(other)
-  local other_view = with_view(other)
-  return self:get_name() ~= nil and self:get_name() == other_view:get_name()
-end
-
 function ViewMethods:get_recipe()
   if not self.valid or not self.entity or not self.entity.get_recipe then
     return nil, nil, "missing-get-recipe"
@@ -173,18 +161,8 @@ function ViewMethods:get_recipe()
   return recipe, quality, nil
 end
 
-function ViewMethods:is_crafting_machine()
-  if not self.valid or not self.entity or not self.entity.get_recipe then
-    return false
-  end
-
-  local ok = pcall(self.entity.get_recipe, self.entity)
-  return ok
-end
-
 function ViewMethods:is_valid_source()
-  local recipe = self:get_recipe()
-  return self:is_crafting_machine() and recipe ~= nil
+  return self:get_recipe() ~= nil
 end
 
 function ViewMethods:is_valid_target()
@@ -414,7 +392,7 @@ function ViewMethods:get_or_create_request_section(data)
   return sections_owner.add_section(), nil
 end
 
-function ViewMethods:apply_storage_settings(game, player, data)
+function ViewMethods:apply_storage_settings(player, data)
   if not data or not data.item then
     return ok_result()
   end
@@ -432,23 +410,23 @@ function ViewMethods:apply_storage_settings(game, player, data)
   return ok_result()
 end
 
-function ViewMethods:apply_requester_settings(game, player, data)
+function ViewMethods:apply_requester_settings(player, data)
+  local ingredients = item_ingredients_only(data and data.ingredients)
+  -- A fluid-only recipe has nothing to request; don't add an empty group.
+  if #ingredients == 0 then
+    return ok_result()
+  end
+
   local section, reason = self:get_or_create_request_section(data)
   if not section then
     return fail_result(reason or "missing-request-section")
   end
 
-  local ingredients = item_ingredients_only(data and data.ingredients)
   local filters = {}
   for index, ingredient in ipairs(ingredients) do
     local prototype = prototypes.item[ingredient.name]
     if prototype then
-      local player_settings = settings.get_player_settings(player.index)
-      local quota = helpers.get_limit(
-        prototype,
-        player_settings["paste-logistic-settings-continued-request-size-type"].value,
-        player_settings["paste-logistic-settings-continued-request-size"].value
-      )
+      local quota = helpers.get_request_quota(player, prototype)
       filters[#filters + 1] = {
         index = index,
         value = {
@@ -484,7 +462,7 @@ function ViewMethods:apply_requester_settings(game, player, data)
   return ok_result()
 end
 
-function ViewMethods:apply_inserter_settings(game, player, data)
+function ViewMethods:apply_inserter_settings(player, data)
   if not data or not data.item then
     return ok_result()
   end
@@ -512,7 +490,12 @@ function ViewMethods:apply_inserter_settings(game, player, data)
   if accumulate_output_limit and existing_condition then
     local existing_first_signal = existing_condition.first_signal
     local existing_signal = existing_first_signal and (existing_first_signal.signal or existing_first_signal)
-    if existing_signal and existing_signal.name == data.name and existing_condition.comparator == "<" then
+    if
+      existing_signal
+      and existing_signal.name == data.name
+      and (existing_signal.quality or "normal") == helpers.get_quality_string(data.quality)
+      and existing_condition.comparator == "<"
+    then
       limit = limit + (existing_condition.constant or 0)
     end
   end

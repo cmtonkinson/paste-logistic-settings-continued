@@ -70,9 +70,9 @@ describe("helpers", function()
       position = { x = 1, y = 2 },
     }
 
-    assert.same({ { -2, -1 }, { 4, 5 } }, helpers.get_area(nil, entity, 3))
-    assert.is_nil(helpers.get_area(nil, nil, 3))
-    assert.same({ { 1, 2 }, { 1, 2 } }, helpers.get_area(nil, entity, -99))
+    assert.same({ { -2, -1 }, { 4, 5 } }, helpers.get_area(entity, 3))
+    assert.is_nil(helpers.get_area(nil, 3))
+    assert.same({ { 1, 2 }, { 1, 2 } }, helpers.get_area(entity, -99))
   end)
 
   it("calculates item limits from stacks or items", function()
@@ -147,7 +147,7 @@ describe("helpers", function()
       end,
     }
 
-    assert.is_true(helpers.is_holding_anything(nil, holding_player, nil))
-    assert.is_nil(helpers.is_holding_anything(nil, empty_player, nil))
+    assert.is_true(helpers.is_holding_anything(holding_player))
+    assert.is_nil(helpers.is_holding_anything(empty_player))
   end)
 end)

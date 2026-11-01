@@ -31,8 +31,11 @@ function Support.with_mocked_factorio_globals()
   local original_settings = rawget(_G, "settings")
   local original_table_size = rawget(_G, "table_size")
   local original_defines = rawget(_G, "defines")
+  local original_game = rawget(_G, "game")
 
+  _G.game = {}
   _G.prototypes = {
+    entity = {},
     item = {
       ["transport-belt"] = { stack_size = 100, name = "transport-belt" },
       ["iron-plate"] = { stack_size = 100, name = "iron-plate" },
@@ -89,6 +92,7 @@ function Support.with_mocked_factorio_globals()
     _G.settings = original_settings
     _G.table_size = original_table_size
     _G.defines = original_defines
+    _G.game = original_game
   end
 end
 
@@ -123,25 +127,23 @@ function Support.make_control_harness()
         is_valid_target = function()
           return target and target.valid
         end,
-        same_effective_name = function(_, other)
-          local target_name = target and (target.ghost_name or target.name)
-          local other_name = other and (other.ghost_name or other.source_name or other.name)
-          return target_name ~= nil and target_name == other_name
+        get_name = function()
+          return target and (target.ghost_name or target.name)
         end,
       }
     end,
   }
 
   harness.lib_stub = {
-    copy_settings = function(_, _, target)
+    copy_settings = function(_, target)
       local data = { source = target, copied = true }
       table.insert(harness.lib_calls, { kind = "copy", target = target, data = data })
       return data
     end,
-    paste_settings = function(_, _, target, data)
+    paste_settings = function(_, target, data)
       table.insert(harness.lib_calls, { kind = "paste", target = target, data = data })
     end,
-    autoconfigure_settings = function(_, _, target, data)
+    autoconfigure_settings = function(_, target, data)
       table.insert(harness.lib_calls, { kind = "autoconfigure", target = target, data = data })
     end,
   }
