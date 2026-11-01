@@ -363,11 +363,8 @@ function lib.ensure_ghost_layout(game, player, target, data)
 end
 
 -----------------------------------------------------------------------------
--- Picks the entity the output limit text should hover over. The limit governs
--- what the inserter may put into the chest it feeds, so the chest is what the
--- player cares about; fall back to the inserter when it feeds anything else.
--- @param inserter_view EntityView: The inserter that was configured.
--- @return LuaEntity|nil: The entity to anchor the text to.
+-- The limit governs what the inserter puts into the chest it feeds, so the text
+-- goes over that chest; over the inserter when it feeds anything else.
 local function get_output_limit_text_anchor(inserter_view)
   local drop_target = inserter_view:get_drop_target()
   local drop_view = EntityView.resolve(drop_target)
@@ -378,12 +375,6 @@ local function get_output_limit_text_anchor(inserter_view)
 end
 
 -----------------------------------------------------------------------------
--- Shows the applied output limit as floating text over the chest being fed.
--- @param player LuaPlayer: The player who pasted.
--- @param inserter_view EntityView: The inserter that was configured.
--- @param data table: Information about the recipe being crafted.
--- @param result table: The result returned by apply_inserter_settings.
--- @return nil
 function lib.show_output_limit_text(player, inserter_view, data, result)
   if not data or not result or not result.ok or not result.limit then
     return
@@ -420,8 +411,8 @@ function lib.show_output_limit_text(player, inserter_view, data, result)
     return
   end
 
-  -- Deliberately no speed or time_to_live: Factorio stretches both on its own
-  -- for text longer than 25 characters, which this usually is.
+  -- No speed or time_to_live: Factorio stretches both for text over 25
+  -- characters, which this usually is.
   pcall(function()
     player.create_local_flying_text({
       text = text,
@@ -432,11 +423,6 @@ function lib.show_output_limit_text(player, inserter_view, data, result)
 end
 
 -----------------------------------------------------------------------------
--- Applies the settings to an inserter.
--- @param game LuaGameScript: The game object.
--- @param entity LuaEntity: The inserter to configure.
--- @param data table: Information about the recipe being crafted.
--- @return table: The result of applying the settings.
 function lib.apply_inserter_settings(game, player, inserter, data)
   local view = EntityView.resolve(inserter)
   local result = view:apply_inserter_settings(game, player, data)
@@ -445,11 +431,6 @@ function lib.apply_inserter_settings(game, player, inserter, data)
 end
 
 -----------------------------------------------------------------------------
--- Applies the settings to a chest.
--- @param game LuaGameScript: The game object.
--- @param entity LuaEntity: The chest to copy to.
--- @param data table: Information about the recipe being crafted.
--- @return nil
 function lib.apply_chest_settings(game, player, entity, data)
   local view = EntityView.resolve(entity)
   if view:is_storage_chest() then
@@ -460,10 +441,7 @@ function lib.apply_chest_settings(game, player, entity, data)
 end
 
 -----------------------------------------------------------------------------
--- Copies the settings from the source entity.
--- @param game LuaGameScript: The game object.
--- @param entity LuaEntity: The entity to copy from.
--- @return table: Information about the recipe being crafted.
+-- Returns the recipe data to paste, or nil when the entity has no recipe.
 function lib.copy_settings(game, player, entity)
   local view = EntityView.resolve(entity)
   local data = {}
@@ -495,8 +473,6 @@ function lib.copy_settings(game, player, entity)
     data.quality = quality_level
   end
 
-  -- We only want to deal with items, not fluids, so we check prototypes
-  -- and ignore fluids.
   local item_ingredients = {}
   for _, ing in ipairs(recipe.ingredients) do
     local proto = prototypes.item[ing.name]
@@ -515,11 +491,6 @@ function lib.copy_settings(game, player, entity)
 end
 
 -----------------------------------------------------------------------------
--- Applies the settings to the target entity.
--- @param game LuaGameScript: The game object.
--- @param data table: Information about the recipe being crafted.
--- @param target LuaEntity: The entity to copy to.
--- @return nil
 function lib.paste_settings(game, player, target, data)
   local view = EntityView.resolve(target)
   if view:is_logistic_container() then
@@ -530,36 +501,26 @@ function lib.paste_settings(game, player, target, data)
 end
 
 -----------------------------------------------------------------------------
--- Automatically copies settings from the target entity to connected inserters
--- and chests, in line with the basic copy/paste semantics of the mod.
--- When a taret CraftinMachine is copied from, and then pasted to, this function
--- locates connected inserters (and chests connected to the inserters) and then
--- applies the settings to them.
--- @param game LuaGameScript: The game object.
--- @param player.index number: The index of the player.
--- @param target LuaEntity: The entity to copy from.
--- @return nil
+-- Pastes onto the inserters around a crafting machine and the chests they feed
+-- or draw from.
 function lib.autoconfigure_settings(game, player, target, data)
   local target_view = EntityView.resolve(target)
-  -- Seemingly counter-intuitively, the target needs to be a valid source.
+  -- The target is a crafting machine, so it must pass the source check.
   if not target_view:is_valid_source() then
     return
   end
   local processed = lib.ensure_ghost_layout(game, player, target, data)
-  -- Find nearby inserters.
   local nearby_inserters = target.surface.find_entities_filtered({
     area = helpers.get_area(game, target, 4),
     force = target.force,
   })
 
-  -- Loop through each inserter; only paste settings for inserters which are
-  -- linked to both the target and a chest in the "right" direction.
   for _, candidate in ipairs(nearby_inserters) do
     local inserter_view = EntityView.resolve(candidate)
     if inserter_view:is_inserter() and not processed[candidate] then
       local pt = inserter_view:get_pickup_target()
       local dt = inserter_view:get_drop_target()
-      -- Look for cases where we have an output inserter dropping into a storage chest.
+      -- Output inserter dropping into a storage chest.
       if pt and pt.valid and pt == target and EntityView.resolve(dt):is_storage_chest() then
         if not processed[candidate] then
           lib.paste_settings(game, player, candidate, data)
@@ -569,7 +530,7 @@ function lib.autoconfigure_settings(game, player, target, data)
           lib.paste_settings(game, player, dt, data)
           processed[dt] = true
         end
-      -- Look for cases where we have an input inserter pulling from a requester chest.
+      -- Input inserter pulling from a requester chest.
       elseif dt and dt.valid and dt == target and EntityView.resolve(pt):is_requester_chest() then
         if pt and not processed[pt] then
           lib.paste_settings(game, player, pt, data)

@@ -1,50 +1,38 @@
 *A lightweight Factorio 2.1 mod to save a few clicks when creating bot-operated
 crafting machines.*
 
-Read ./description.md for more information; this is meant to stay in sync with
-what's on the mod portal.
+See ./description.md, which mirrors the mod portal page; keep the two in sync.
 
 # Development
-This project targets Lua 5.2, the version Factorio embeds, pinned in
-`.lua-version`. `make deps` builds exactly that toolchain into
-`.hererocks/` with [hererocks] and installs the dev & test dependencies. It
-needs no system Lua and no shell setup, so it works from a cold shell in a
-fresh clone:
+`make deps` builds the Lua version Factorio embeds, pinned in `.lua-version`,
+into `.hererocks/` with [hererocks], then installs the dev and test
+dependencies. It needs [uv] (for `uvx`) and a C compiler, but no system Lua.
+Set `HEREROCKS` to invoke hererocks other than through `uvx`. Delete
+`.hererocks/` to force a clean rebuild.
 ```sh
 make deps
 ```
 
-This requires [uv], for `uvx`, and a C compiler. Set `HEREROCKS` to change how
-hererocks is invoked; CI installs it directly and passes `HEREROCKS=hererocks`.
+Install `stylua` separately: `brew install stylua`.
 
-`make verify` runs format checking, linting, and tests, then the `factestio`
-integration suite; CI sets `CI`, which skips that last step there and runs the
-suite as its own `integration` job against headless Factorio once the checks
-pass. Everything before it runs identically in both places. `make format`
-rewrites files rather than only checking them.
+`make verify` runs format checking, linting, tests, then the `factestio`
+integration suite. When `CI` is set it skips `factestio`, which CI runs as its
+own `integration` job. `make format` rewrites files; `make help` lists targets.
 
-`stylua` is not a LuaRocks package and must be installed separately with
-`brew install stylua`.
-
-Every `make` target invokes the toolchain by absolute path, so no target needs
-your shell configured. Running those tools *directly* is another matter, and
-`factestio` especially: it resolves `lua` from `PATH` itself and refuses to run
-against anything but 5.2. The `.envrc` puts `.hererocks/bin/` first on `PATH`
-whenever your shell is in this directory; run `direnv allow` once to enable it.
-Without [direnv], export it by hand:
+`make` targets call the toolchain by absolute path. To run the tools directly,
+put `.hererocks/bin/` first on `PATH`: `factestio` resolves `lua` from `PATH`
+and refuses anything but 5.2. The `.envrc` does this under [direnv] after a
+one-time `direnv allow`; otherwise:
 ```sh
 export PATH="$PWD/.hererocks/bin:$PATH"
 ```
 
-The `factestio` target drives a real Factorio install, so it needs more than the
-Lua toolchain: `brew install cmtonkinson/tap/factestio` (0.7.0 or later; earlier
-releases exit 0 even when tests fail), then a one-time
-`factestio activate` in this directory. Activation scaffolds the gitignored
-`factestio/config.lua`, symlinks the mod into Factorio's data directory, and
-rewrites `mod-list.json` to disable other mods; `factestio deactivate` restores
-the previous state. `factestio doctor` checks the environment.
-
-Delete `.hererocks/` to force a clean rebuild of the toolchain.
+`make factestio` drives a real Factorio install. Install
+`brew install cmtonkinson/tap/factestio` 0.7.0 or later (earlier releases exit
+0 when tests fail), then run `factestio activate` once here. Activation
+scaffolds the gitignored `factestio/config.lua`, symlinks the mod into
+Factorio's data directory, and rewrites `mod-list.json` to disable other mods;
+`factestio deactivate` restores them. `factestio doctor` checks the environment.
 
 [direnv]: https://direnv.net
 [hererocks]: https://github.com/luarocks/hererocks

@@ -83,8 +83,6 @@ describe("helpers", function()
     assert.equal(0, helpers.get_limit(proto, "weird", 7))
   end)
 
-  -- get_quality_string resolves against the game's quality prototypes, so these
-  -- stand up a registry instead of assuming a fixed table of levels.
   local function with_qualities(levels, fn)
     local original = rawget(_G, "prototypes")
     local quality = nil
@@ -115,8 +113,6 @@ describe("helpers", function()
   end)
 
   it("resolves a modded quality tier the old fixed table could not", function()
-    -- Vanilla leaves level 4 empty; the hardcoded map reported it as normal,
-    -- so a mod occupying that level got the wrong quality pasted silently.
     with_qualities({ normal = 0, mythic = 4, legendary = 5 }, function()
       assert.equal("mythic", helpers.get_quality_string(4))
     end)

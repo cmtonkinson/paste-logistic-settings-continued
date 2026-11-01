@@ -29,17 +29,15 @@ jobs:
       - name: Install hererocks
         run: pip install hererocks
 
-      # stylua gates syntax variants behind cargo features, and the default set
-      # omits lua52 -- without it .stylua.toml's `syntax = "Lua52"` is rejected.
-      # Homebrew builds with --all-features, which is why this only bites in CI.
+      # The default cargo features omit lua52, which .stylua.toml's
+      # `syntax = "Lua52"` needs. Homebrew builds with --all-features.
       - name: Install stylua
         run: cargo install stylua --features lua52
 
       - name: Install Lua toolchain and dependencies
         run: make deps
 
-      # Fail fast, same order as `make verify`: static checks before running
-      # any code, since a failure in one makes the next pointless.
+      # Same order as `make verify`: static checks before running any code.
       - name: Format check
         run: make format-check
 
@@ -49,8 +47,7 @@ jobs:
       - name: Unit tests
         run: make test
 
-  # The factestio integration suite (`make factestio` locally) against a real
-  # headless Factorio. Last in the chain: it only starts once `test` passes.
+  # `make factestio` against headless Factorio.
   integration:
     needs: test
     runs-on: ubuntu-latest
@@ -81,8 +78,7 @@ jobs:
       - name: Install Lua toolchain and dependencies
         run: make deps
 
-      # Homebrew is macOS-only, so take factestio straight from its release tag
-      # and install its rocks into the project toolchain.
+      # Homebrew is macOS-only, so install factestio from its release tag.
       - name: Install factestio
         run: |
           git clone --quiet --depth 1 --branch "$FACTESTIO_VERSION" \
@@ -91,8 +87,7 @@ jobs:
           echo "$RUNNER_TEMP/factestio/bin" >> "$GITHUB_PATH"
           echo "$PWD/.hererocks/bin" >> "$GITHUB_PATH"
 
-      # Headless builds need no login. Unpacked to ~/.factorio, the Linux
-      # default that factestio detects on its own.
+      # Headless builds need no login. factestio finds ~/.factorio on its own.
       - name: Install headless Factorio
         run: |
           curl -fsSL "https://factorio.com/get-download/${FACTORIO_VERSION}/headless/linux64" | tar -xJ -C "$HOME"

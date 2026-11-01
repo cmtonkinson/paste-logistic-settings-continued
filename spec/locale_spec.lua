@@ -1,7 +1,5 @@
--- Guards the locale file itself. The other specs assert the *structure* of the
--- LocalisedStrings the code builds, which says nothing about whether the .cfg
--- they reference is present or well formed -- a gap that shipped a literal
--- "__plural_for_parameter_1__{1=stack|rest=stacks}__" into the game once.
+-- Guards the locale file itself; the other specs check only the structure of the
+-- LocalisedStrings that reference it.
 
 local LOCALE_PATH = "locale/en/paste-logistic-settings.continued.cfg"
 
@@ -52,8 +50,7 @@ describe("locale", function()
       end
     end
 
-    -- Only keys that look like locale lookups, i.e. ones the file also defines
-    -- a section for, are worth asserting on here.
+    -- Assert only on keys in sections the locale file defines.
     local checked = 0
     for key, path in pairs(referenced) do
       local section = key:match("^([^.]+)%.")
@@ -80,8 +77,6 @@ describe("locale", function()
 
   it("keeps rich text out of parameterised locale entries", function()
     for key, value in pairs(entries) do
-      -- Factorio resolves rich text before substituting __N__ parameters, so a
-      -- tag containing one silently renders as nothing.
       assert.is_nil(
         value:match("%[[%w%-]+=__%d+__%]"),
         key .. " puts a locale parameter inside a rich text tag: " .. value

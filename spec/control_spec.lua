@@ -140,8 +140,6 @@ describe("control", function()
     harness.load_control()
     harness.handlers.init()
 
-    -- paste_data has to live on storage: Factorio only serialises that table
-    -- into the save, and only that table is synchronised in multiplayer.
     assert.same({}, storage.paste_data)
   end)
 

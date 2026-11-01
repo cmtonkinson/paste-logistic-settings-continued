@@ -2,13 +2,10 @@ local helpers = require("__paste-logistic-settings-continued__.src.helpers")
 local lib = require("__paste-logistic-settings-continued__.src.lib")
 local EntityView = require("__paste-logistic-settings-continued__.src.entity_view")
 
--- Prefix all events to avoid conflicts.
 local EVENT_NAMESPACE = "paste-logistic-settings-continued"
 
 -----------------------------------------------------------------------------
--- `storage` is the table Factorio serialises into the save; before 2.0 it was
--- named differently. State kept anywhere else is neither persisted across a
--- save/load nor synchronised between peers in multiplayer.
+-- Keep state on `storage`: Factorio saves and synchronises only that table.
 script.on_init(function()
   storage.paste_data = {}
 end)
@@ -55,13 +52,10 @@ script.on_event(EVENT_NAMESPACE .. "-paste", function(event)
     return
   end
 
-  -- Are we pasting onto the source entity* and autoconfiguring?
-  -- *More specficially, are we pasting onto an entity /with the same name
-  -- as the/ source entity? This allows us to copy from one CraftingMachine
-  -- and autoconfigure to many others.
+  -- Pasting onto any entity with the source's name autoconfigures it, so one
+  -- copy can configure many crafting machines.
   if target_view:same_effective_name(data.source) then
     lib.autoconfigure_settings(game, player, target, data)
-  -- Nope, just pasting to an inserter or chest.
   else
     lib.paste_settings(game, player, target, data)
   end

@@ -4,9 +4,8 @@ ROCKSPEC := $(lastword $(sort $(wildcard *.rockspec)))
 LUA_VERSION := $(shell cat .lua-version)
 FACTESTIO_TIMEOUT ?= 10
 
-# Project-local Lua toolchain, built by hererocks into $(LUA_TREE). Nothing here
-# depends on the ambient shell, so every target works from a cold shell. Override
-# HEREROCKS when it is not run through uvx; CI installs it and passes HEREROCKS=hererocks.
+# Project-local Lua toolchain, called by absolute path so targets need no shell
+# setup. Override HEREROCKS when hererocks is not run through uvx.
 LUA_TREE := .hererocks
 LUA_BIN := $(CURDIR)/$(LUA_TREE)/bin
 HEREROCKS ?= uvx hererocks
@@ -39,8 +38,7 @@ lint: ## Run luacheck
 test: ## Run unit tests
 	$(BUSTED) -o gtest
 
-# factestio is an external wrapper that resolves `lua` and `luarocks` from PATH
-# and requires Lua 5.2, so it needs the project toolchain ahead of the ambient one.
+# factestio resolves `lua` and `luarocks` from PATH and requires Lua 5.2.
 factestio: ## Run the factestio integration suite against real Factorio
 	PATH="$(LUA_BIN):$$PATH" factestio --timeout $(FACTESTIO_TIMEOUT)
 
