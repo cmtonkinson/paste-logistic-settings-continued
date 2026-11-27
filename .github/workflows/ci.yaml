@@ -57,7 +57,7 @@ jobs:
 
     env:
       FACTORIO_VERSION: "2.1.25"
-      FACTESTIO_VERSION: "v0.7.0"
+      FACTESTIO_VERSION: "v0.8.0"
 
     defaults:
       run:
